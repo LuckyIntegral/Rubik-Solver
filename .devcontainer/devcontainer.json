@@ -1,0 +1,21 @@
+{
+  "name": "Rubik Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "workspaceFolder": "/workspace",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached"
+  ],
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "remote.autoForwardPorts": false,
+        "terminal.integrated.defaultProfile.linux": "zsh"
+      },
+      "extensions": ["streetsidesoftware.code-spell-checker"]
+    }
+  }
+}
