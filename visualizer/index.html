@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rubik Visualizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Tailwind can't target pseudo-elements on range inputs */
+    input[type="range"] {
+      accent-color: #4070c8;
+    }
+  </style>
+</head>
+
+<body class="bg-[#141414] text-[#e8e8e8] min-h-screen flex flex-col items-center p-5 font-sans">
+
+  <h1 class="text-2xl font-semibold mb-5 tracking-wide text-white">🧊 Rubik's Cube Visualizer</h1>
+
+  <!-- Input Panel -->
+  <div class="bg-[#1e1e1e] border border-[#333] rounded-xl px-5 py-4 w-full max-w-[680px] mb-4">
+
+    <div class="flex items-center gap-3 mb-3">
+      <label class="w-16 text-xs text-[#aaa] uppercase tracking-widest shrink-0 flex items-center gap-1.5">
+        <span class="inline-block w-2.5 h-2.5 rounded-sm bg-[#ff5900]"></span>Shuffle
+      </label>
+      <input id="input-shuffle" type="text" value="L D R" placeholder="e.g.  L D R  U F2 B'" spellcheck="false"
+        autocomplete="off"
+        class="flex-1 bg-[#2a2a2a] border border-[#444] rounded-md text-[#f0f0f0] text-sm font-mono px-3 py-1.5 outline-none focus:border-[#666] transition-colors" />
+    </div>
+
+    <div class="flex items-center gap-3 mb-4">
+      <label class="w-16 text-xs text-[#aaa] uppercase tracking-widest shrink-0 flex items-center gap-1.5">
+        <span class="inline-block w-2.5 h-2.5 rounded-sm bg-[#4070c8]"></span>Solve
+      </label>
+      <input id="input-solve" type="text" value="R' D' L'" placeholder="e.g.  R' D' L'" spellcheck="false"
+        autocomplete="off"
+        class="flex-1 bg-[#2a2a2a] border border-[#444] rounded-md text-[#f0f0f0] text-sm font-mono px-3 py-1.5 outline-none focus:border-[#666] transition-colors" />
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button id="btn-apply"
+        class="bg-[#2e5bab] border border-[#4070c8] text-white rounded-md text-sm px-4 py-1.5 cursor-pointer hover:bg-[#3569c4] active:bg-[#1f3f7a] transition-colors">
+        Apply
+      </button>
+      <button id="btn-reset-view"
+        class="bg-[#2d2d2d] border border-[#444] text-[#e8e8e8] rounded-md text-sm px-4 py-1.5 cursor-pointer hover:bg-[#3a3a3a] hover:border-[#666] transition-colors">
+        Reset View
+      </button>
+      <span id="error-msg" class="flex-1 text-xs text-[#f66]"></span>
+    </div>
+
+  </div>
+
+  <!-- Main area -->
+  <div class="flex gap-4 items-start w-full max-w-[900px] flex-wrap lg:flex-nowrap">
+
+    <!-- 3-D Canvas -->
+    <div class="relative shrink-0">
+      <canvas id="cube-canvas" width="500" height="500"
+        class="block bg-[#1a1a1a] border border-[#333] rounded-xl cursor-grab active:cursor-grabbing touch-none"></canvas>
+      <div
+        class="absolute bottom-2.5 left-1/2 -translate-x-1/2 text-[0.7rem] text-[#555] pointer-events-none whitespace-nowrap">
+        drag to rotate
+      </div>
+    </div>
+
+    <!-- Right panel -->
+    <div class="flex-1 min-w-[200px] flex flex-col gap-3.5">
+
+      <!-- Progress -->
+      <div class="bg-[#1e1e1e] border border-[#333] rounded-xl px-4 py-3.5">
+        <div class="text-[0.7rem] uppercase tracking-widest text-[#666] mb-2.5">Progress</div>
+        <div id="step-display" class="text-lg font-semibold mb-1.5">Step — / —</div>
+        <div id="move-display" class="text-sm text-[#aaa] min-h-[1.2em]">No sequence loaded</div>
+        <div class="bg-[#2a2a2a] rounded h-1.5 mt-2.5 overflow-hidden">
+          <div id="progress-bar"
+            class="h-full bg-gradient-to-r from-[#ff5900] to-[#b71234] rounded w-0 transition-all duration-100">
+          </div>
+        </div>
+      </div>
+
+      <!-- Playback -->
+      <div class="bg-[#1e1e1e] border border-[#333] rounded-xl px-4 py-3.5">
+        <div class="text-[0.7rem] uppercase tracking-widest text-[#666] mb-2.5">Playback</div>
+        <div class="flex gap-2 flex-wrap">
+          <button id="btn-play"
+            class="bg-[#2d2d2d] border border-[#444] text-[#e8e8e8] rounded-md text-sm px-3.5 py-1.5 cursor-pointer hover:bg-[#3a3a3a] hover:border-[#666] transition-colors whitespace-nowrap">
+            ▶ Play
+          </button>
+          <button id="btn-pause"
+            class="bg-[#2d2d2d] border border-[#444] text-[#e8e8e8] rounded-md text-sm px-3.5 py-1.5 cursor-pointer hover:bg-[#3a3a3a] hover:border-[#666] transition-colors whitespace-nowrap">
+            ⏸ Pause
+          </button>
+          <button id="btn-back"
+            class="bg-[#2d2d2d] border border-[#444] text-[#e8e8e8] rounded-md text-sm px-3.5 py-1.5 cursor-pointer hover:bg-[#3a3a3a] hover:border-[#666] transition-colors whitespace-nowrap">
+            ◀ Back
+          </button>
+          <button id="btn-forward"
+            class="bg-[#2d2d2d] border border-[#444] text-[#e8e8e8] rounded-md text-sm px-3.5 py-1.5 cursor-pointer hover:bg-[#3a3a3a] hover:border-[#666] transition-colors whitespace-nowrap">
+            Fwd ▶
+          </button>
+        </div>
+
+        <div class="mt-3">
+          <div class="text-[0.7rem] uppercase tracking-widest text-[#666] mb-1.5">Speed</div>
+          <div class="flex items-center gap-3">
+            <input id="speed-slider" type="range" min="100" max="3000" step="100" value="1000" class="flex-1" />
+            <span id="speed-label" class="text-xs text-[#aaa] w-14 text-right">1000 ms</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sequence -->
+      <div class="bg-[#1e1e1e] border border-[#333] rounded-xl px-4 py-3.5">
+        <div class="text-[0.7rem] uppercase tracking-widest text-[#666] mb-2.5">Sequence</div>
+        <div id="seq-display" class="text-xs leading-loose break-all">—</div>
+      </div>
+
+      <!-- Face Colors Legend -->
+      <div class="bg-[#1e1e1e] border border-[#333] rounded-xl px-4 py-3.5">
+        <div class="text-[0.7rem] uppercase tracking-widest text-[#666] mb-2.5">Face Colors</div>
+        <div class="flex flex-col gap-1.5">
+          <div class="flex items-center gap-2 text-xs text-[#aaa]">
+            <div class="w-3 h-3 rounded-sm shrink-0 bg-white border border-[#555]"></div>U - Up (White)
+          </div>
+          <div class="flex items-center gap-2 text-xs text-[#aaa]">
+            <div class="w-3 h-3 rounded-sm shrink-0 bg-[#ffd500]"></div>D - Down (Yellow)
+          </div>
+          <div class="flex items-center gap-2 text-xs text-[#aaa]">
+            <div class="w-3 h-3 rounded-sm shrink-0 bg-[#009b48]"></div>F - Front (Green)
+          </div>
+          <div class="flex items-center gap-2 text-xs text-[#aaa]">
+            <div class="w-3 h-3 rounded-sm shrink-0 bg-[#0046ad]"></div>B - Back (Blue)
+          </div>
+          <div class="flex items-center gap-2 text-xs text-[#aaa]">
+            <div class="w-3 h-3 rounded-sm shrink-0 bg-[#ff5900]"></div>L - Left (Orange)
+          </div>
+          <div class="flex items-center gap-2 text-xs text-[#aaa]">
+            <div class="w-3 h-3 rounded-sm shrink-0 bg-[#b71234]"></div>R - Right (Red)
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="index.js" defer></script>
+</body>
+
+</html>
