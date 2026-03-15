@@ -44,6 +44,9 @@ run		:
 		$(MAKE) re
 		./$(NAME)
 
+visual	:
+		node visualizer/server.js
+
 -include $(DEPS)
 
 .PHONY: all clean fclean bonus re run
