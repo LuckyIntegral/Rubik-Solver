@@ -6,6 +6,7 @@ CXX			= g++
 RM			= rm -rf
 CXXFLAGS	= -Wall -Wextra -Werror -MD -MP -g
 MAKEFLAGS	= -j$(nproc) --no-print-directory
+INCLUDES	= -I incs/
 
 NAME		= rubik
 
@@ -27,7 +28,7 @@ $(NAME)	: ${OBJS}
 
 ${OBJS_DIR}/%.o	: ${SRCS_DIR}/%.cpp
 		@mkdir -p $(dir $@)
-		${CXX} ${CXXFLAGS} -c $< -o $@
+		${CXX} ${CXXFLAGS} -c $< -o $@ ${INCLUDES}
 
 clean	:
 		$(RM) $(OBJS_DIR)
