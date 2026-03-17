@@ -42,3 +42,6 @@ rubik
 
 # debug information files
 *.dwo
+
+# subject
+en.subject.pdf
