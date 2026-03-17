@@ -21,14 +21,14 @@
       html,body{height:100%}
       body{
         margin:0;
-        background: radial-gradient(1200px 800px at 25% 10%, #18203a 0%, var(--bg0) 55%, #07080b 100%);
+        background: #0b3a7a;
         color:var(--text);
         font: 14px/1.35 system-ui, -apple-system, Segoe UI, Ubuntu, Cantarell, Noto Sans, Arial, sans-serif;
       }
       .wrap{
         display:grid;
-        grid-template-columns: 360px 1fr;
-        gap: 16px;
+        grid-template-columns: var(--leftW, 360px) 10px 1fr;
+        gap: 14px;
         padding: 16px;
         height:100%;
         min-height: 520px;
@@ -39,6 +39,9 @@
         border-radius: 14px;
         overflow:hidden;
         box-shadow: 0 10px 40px rgba(0,0,0,.35);
+        min-height: 0; /* allow internal scrolling */
+        display:flex;
+        flex-direction:column;
       }
       .panel .hdr{
         padding: 14px 14px 10px;
@@ -56,7 +59,14 @@
         color:var(--muted);
         font-size:12px;
       }
-      .panel .bd{padding:14px}
+      .panel .bd{
+        padding:14px;
+        overflow:auto;
+        min-height: 0;
+        scrollbar-width: thin;
+      }
+      .panel .bd::-webkit-scrollbar{width:10px}
+      .panel .bd::-webkit-scrollbar-thumb{background: rgba(255,255,255,.10); border-radius: 99px}
       label{display:block; font-size:12px; color:var(--muted); margin: 12px 0 6px}
       textarea, input[type="text"], select{
         width:100%;
@@ -121,6 +131,7 @@
         border-radius: 14px;
         overflow:hidden;
         background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.08));
+        min-height: 0;
       }
       #view{
         width:100%;
@@ -148,8 +159,117 @@
         font-size: 12px;
       }
       .pill b{color: white}
+      .seq{
+        margin-top:12px;
+        border:1px solid var(--border);
+        background: rgba(0,0,0,.20);
+        border-radius: 12px;
+        padding: 10px;
+      }
+      .seqtop{
+        display:grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap:10px;
+        color:var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        margin-bottom: 8px;
+      }
+      .seqtop b{color: var(--text)}
+      .seqstrip{
+        display:flex;
+        gap:6px;
+        flex-wrap:nowrap;
+        overflow:auto;
+        padding-bottom: 6px;
+        scrollbar-width: thin;
+      }
+      .seqstrip::-webkit-scrollbar{height:8px}
+      .seqstrip::-webkit-scrollbar-thumb{background: rgba(255,255,255,.12); border-radius: 99px}
+      .movechip{
+        flex:0 0 auto;
+        border:1px solid var(--border);
+        background: rgba(255,255,255,.06);
+        padding: 6px 8px;
+        border-radius: 999px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--text);
+        user-select:none;
+        white-space:nowrap;
+      }
+      .movechip.done{opacity:.45}
+      .movechip.next{border-color: rgba(96,165,250,.70); background: rgba(96,165,250,.16)}
+      .movechip.exec{border-color: rgba(52,211,153,.70); background: rgba(52,211,153,.14)}
+
+      .manualgrid{
+        display:grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap:8px;
+        margin-top: 6px;
+      }
+      .manualgrid button{
+        padding: 7px 8px;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .mini{
+        position:absolute;
+        top: 14px;
+        right: 14px;
+        width: var(--miniSize, 180px);
+        height: var(--miniSize, 180px);
+        border-radius: 14px;
+        overflow:hidden;
+        border:1px solid var(--border);
+        background: rgba(0,0,0,.28);
+        box-shadow: 0 10px 35px rgba(0,0,0,.35);
+      }
+      #miniView{width:100%; height:100%; display:block}
+      .miniTag{
+        position:absolute;
+        left:10px;
+        top:10px;
+        padding: 6px 8px;
+        border-radius: 999px;
+        border:1px solid var(--border);
+        background: rgba(0,0,0,.35);
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text);
+        pointer-events:none;
+      }
       @media (max-width: 920px){
-        .wrap{grid-template-columns: 1fr; grid-template-rows: auto 1fr}
+        .wrap{
+          grid-template-columns: 1fr;
+          grid-template-rows: auto 1fr;
+        }
+        .splitter{display:none}
+      }
+
+      .splitter{
+        position:relative;
+        border-radius: 999px;
+        cursor: col-resize;
+        user-select:none;
+        touch-action:none;
+        background: rgba(255,255,255,.05);
+        border:1px solid rgba(255,255,255,.10);
+      }
+      .splitter:hover{background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14)}
+      .splitter:active{background: rgba(96,165,250,.22); border-color: rgba(96,165,250,.30)}
+      .splitter::after{
+        content:"";
+        position:absolute;
+        top: 50%;
+        left:50%;
+        width: 4px;
+        height: 42px;
+        transform: translate(-50%, -50%);
+        border-radius: 99px;
+        background: rgba(255,255,255,.12);
+        box-shadow: 0 0 0 1px rgba(0,0,0,.18) inset;
       }
     </style>
   </head>
@@ -179,6 +299,17 @@
             <button id="btnStep" class="" title="Step forward">Step ▶</button>
             <button id="btnPlay" class="good" title="Play from current position">Play</button>
             <button id="btnPause" title="Pause">Pause</button>
+            <button id="btnScrambleOnly" title="Reset then run only the scramble part">Scramble only</button>
+            <button id="btnSolveOnly" title="Run only the solve part (from current state)">Solve only</button>
+          </div>
+
+          <div class="seq">
+            <div class="seqtop">
+              <div>prev: <b id="prevMove">—</b></div>
+              <div style="text-align:center">now: <b id="curMove">—</b></div>
+              <div style="text-align:right">next: <b id="nextMove">—</b></div>
+            </div>
+            <div id="seqStrip" class="seqstrip" aria-label="Move sequence"></div>
           </div>
 
           <label>Move speed</label>
@@ -187,18 +318,14 @@
             <div style="min-width:88px; text-align:right; font-family:var(--mono)" id="speedLabel">240 ms</div>
           </div>
 
-          <label>Manual move</label>
-          <div class="row">
-            <select id="manualMove">
-              <option>R</option><option>R'</option><option>R2</option>
-              <option>L</option><option>L'</option><option>L2</option>
-              <option>U</option><option>U'</option><option>U2</option>
-              <option>D</option><option>D'</option><option>D2</option>
-              <option>F</option><option>F'</option><option>F2</option>
-              <option>B</option><option>B'</option><option>B2</option>
-            </select>
-            <button id="btnManual">Apply</button>
+          <label>Back view size</label>
+          <div class="slider">
+            <input id="miniSize" type="range" min="120" max="320" step="10" value="180" />
+            <div style="min-width:88px; text-align:right; font-family:var(--mono)" id="miniSizeLabel">180 px</div>
           </div>
+
+          <label>Manual move</label>
+          <div id="manualGrid" class="manualgrid" aria-label="Manual moves"></div>
 
           <div class="hint">
             Keys: <b>Space</b> play/pause, <b>←</b>/<b>→</b> step, <b>Backspace</b> undo.
@@ -212,8 +339,14 @@
         </div>
       </div>
 
+      <div id="splitter" class="splitter" title="Drag to resize panel"></div>
+
       <div class="stage">
         <canvas id="view"></canvas>
+        <div id="mini" class="mini">
+          <canvas id="miniView"></canvas>
+          <div class="miniTag">back view</div>
+        </div>
         <div class="hud">
           <div class="pill"><b>Drag</b> rotate • <b>Scroll</b> zoom</div>
           <div class="pill" id="pillMove">Move: <b>—</b></div>
