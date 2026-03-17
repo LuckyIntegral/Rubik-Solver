@@ -6,65 +6,35 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = Number(process.env.PORT || 3000);
-const ROOT = path.resolve(__dirname);
-const VIS_ROOT = path.join(ROOT, 'visualizer');
+const INDEX_HTML_PATH = path.resolve(__dirname, 'visualizer', 'index.html');
+const INDEX_JS_PATH = path.resolve(__dirname, 'visualizer', 'index.js');
 
-const MIME = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'application/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.ico': 'image/x-icon',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.svg': 'image/svg+xml; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-};
-
-function safeJoin(root, urlPath) {
-  const p = path.normalize(urlPath).replace(/^(\.\.(\/|\\|$))+/, '');
-  const full = path.join(root, p);
-  if (!full.startsWith(root)) return null;
-  return full;
-}
+const INDEX_HTML = fs.readFileSync(INDEX_HTML_PATH);
+const INDEX_JS = fs.readFileSync(INDEX_JS_PATH);
 
 http
   .createServer((req, res) => {
-    const rawUrl = req.url || '/';
-    const urlPath = rawUrl.split('?')[0];
+    const urlPath = (req.url || '/').split('?')[0];
 
-    // Default to the visualizer page.
-    let mapped = urlPath;
-    if (mapped === '/' || mapped === '/index.html') mapped = '/visualizer/index.html';
-
-    // Allow both /visualizer/... and direct file hits inside visualizer.
-    let filePath = null;
-    if (mapped.startsWith('/visualizer/')) {
-      filePath = safeJoin(VIS_ROOT, mapped.slice('/visualizer/'.length));
-    } else {
-      // if they request "/index.js", serve from visualizer for convenience
-      filePath = safeJoin(VIS_ROOT, mapped.slice(1));
+    if (req.method !== 'GET') {
+      res.writeHead(405, { 'Content-Type': 'text/plain; charset=utf-8' });
+      return res.end('Method Not Allowed');
     }
 
-    if (!filePath) {
-      res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end('Forbidden');
-      return;
+    if (urlPath === '/' || urlPath === '/index.html') {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+      return res.end(INDEX_HTML);
     }
 
-    fs.readFile(filePath, (err, data) => {
-      if (err) {
-        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-        res.end(`Not found: ${urlPath}`);
-        return;
-      }
-      const mime = MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
-      res.writeHead(200, { 'Content-Type': mime, 'Cache-Control': 'no-store' });
-      res.end(data);
-    });
+    if (urlPath === '/index.js') {
+      res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' });
+      return res.end(INDEX_JS);
+    }
+
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    return res.end('Not Found');
   })
   .listen(PORT, '0.0.0.0', () => {
     console.log(`Rubik Visualizer  →  http://localhost:${PORT}`);
     console.log('Press Ctrl+C to stop.');
   });
-
