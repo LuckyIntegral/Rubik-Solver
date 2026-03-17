@@ -20,11 +20,11 @@ function invertMove(m) {
 }
 
 const MOVE_DEF = {
-  R: { axis: 'x', layer: 1,  baseDir: 1 },
+  R: { axis: 'x', layer: 1, baseDir: 1 },
   L: { axis: 'x', layer: -1, baseDir: -1 },
-  U: { axis: 'y', layer: 1,  baseDir: 1 },
+  U: { axis: 'y', layer: 1, baseDir: 1 },
   D: { axis: 'y', layer: -1, baseDir: -1 },
-  F: { axis: 'z', layer: 1,  baseDir: -1 },
+  F: { axis: 'z', layer: 1, baseDir: -1 },
   B: { axis: 'z', layer: -1, baseDir: 1 },
 };
 
@@ -65,6 +65,7 @@ const elMini = document.getElementById('mini');
 const elMiniSize = document.getElementById('miniSize');
 const elMiniSizeLabel = document.getElementById('miniSizeLabel');
 const elSplitter = document.getElementById('splitter');
+const elLeftPanel = document.getElementById('leftPanel');
 
 const state = {
   sequence: [],
@@ -99,7 +100,9 @@ elSpeed.addEventListener('input', setSpeedLabel);
 
 function setMiniSizeLabel() {
   elMiniSizeLabel.textContent = `${Number(elMiniSize.value)} px`;
-  elMini.style.setProperty('--miniSize', `${Number(elMiniSize.value)}px`);
+  const px = Math.max(80, Number(elMiniSize.value));
+  elMini.style.width = `${px}px`;
+  elMini.style.height = `${px}px`;
 }
 setMiniSizeLabel();
 elMiniSize.addEventListener('input', setMiniSizeLabel);
@@ -317,7 +320,7 @@ function renderSequenceStrip() {
   const frag = document.createDocumentFragment();
   state.sequence.forEach((m, idx) => {
     const span = document.createElement('span');
-    span.className = 'movechip';
+    span.className = 'shrink-0 select-none whitespace-nowrap rounded-full border border-white/10 bg-white/5 px-2 py-1.5 font-mono text-xs text-gray-100';
     span.dataset.idx = String(idx);
     span.textContent = m;
     frag.appendChild(span);
@@ -334,17 +337,23 @@ function updateSequenceUI() {
   elCurMove.textContent = histLast || '—';
   elNextMove.textContent = next || '—';
 
-  const chips = elSeqStrip.querySelectorAll('.movechip');
-  chips.forEach((chip) => {
+  const base = 'shrink-0 select-none whitespace-nowrap rounded-full border px-2 py-1.5 font-mono text-xs';
+  const baseDefault = `${base} border-white/10 bg-white/5 text-gray-100`;
+  const baseDone = `${base} border-white/10 bg-white/5 text-gray-100 opacity-45`;
+  const baseNext = `${base} border-sky-300/60 bg-sky-300/15 text-gray-100`;
+  const baseExec = `${base} border-emerald-300/60 bg-emerald-300/15 text-gray-100`;
+
+  for (const chip of elSeqStrip.children) {
     const idx = Number(chip.dataset.idx);
-    chip.classList.toggle('done', idx < state.seqIndex);
-    chip.classList.toggle('next', idx === state.seqIndex);
-    chip.classList.toggle('exec', idx === state.executingSeqIndex);
-  });
+    const isExec = idx === state.executingSeqIndex;
+    const isNext = idx === state.seqIndex;
+    const isDone = idx < state.seqIndex;
+    chip.className = isExec ? baseExec : (isNext ? baseNext : (isDone ? baseDone : baseDefault));
+  }
 
   const activeIdx = state.executingSeqIndex ?? state.seqIndex;
   if (activeIdx != null && activeIdx >= 0 && activeIdx < state.sequence.length) {
-    const el = elSeqStrip.querySelector(`.movechip[data-idx="${activeIdx}"]`);
+    const el = elSeqStrip.querySelector(`[data-idx="${activeIdx}"]`);
     if (el) el.scrollIntoView({ block: 'nearest', inline: 'center' });
   }
 }
@@ -564,6 +573,7 @@ function buildManualButtons() {
     b.type = 'button';
     b.textContent = m;
     b.title = `Apply ${m}`;
+    b.className = 'rounded-xl border border-white/10 bg-white/5 px-2 py-2 font-mono text-xs font-semibold hover:bg-white/10';
     b.addEventListener('click', () => { pause(); applyManualMove(m); });
     elManualGrid.appendChild(b);
   }
@@ -579,11 +589,10 @@ loadSequence();
 // resizable split
 {
   const KEY = 'rubik.leftW';
-  const root = document.documentElement;
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   function applyW(w) {
-    root.style.setProperty('--leftW', `${Math.round(w)}px`);
+    elLeftPanel.style.width = `${Math.round(w)}px`;
   }
 
   const saved = Number(localStorage.getItem(KEY));
@@ -591,10 +600,10 @@ loadSequence();
 
   let drag = null;
   elSplitter.addEventListener('pointerdown', (e) => {
-    if (window.matchMedia && window.matchMedia('(max-width: 920px)').matches) return;
+    if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) return;
     elSplitter.setPointerCapture(e.pointerId);
-    const base = root.getBoundingClientRect();
-    const current = parseFloat(getComputedStyle(root).getPropertyValue('--leftW')) || 360;
+    const base = document.body.getBoundingClientRect();
+    const current = elLeftPanel.getBoundingClientRect().width || 360;
     drag = { startX: e.clientX, startW: current, baseW: base.width };
     e.preventDefault();
   });
@@ -611,7 +620,7 @@ loadSequence();
 
   window.addEventListener('pointerup', () => {
     if (!drag) return;
-    const w = parseFloat(getComputedStyle(root).getPropertyValue('--leftW')) || 360;
+    const w = elLeftPanel.getBoundingClientRect().width || 360;
     localStorage.setItem(KEY, String(Math.round(w)));
     drag = null;
   });

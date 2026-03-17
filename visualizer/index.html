@@ -1,359 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Rubik’s Cube Visualizer</title>
-    <style>
-      :root{
-        --bg0:#0b0d12;
-        --bg1:#111827;
-        --panel:#0f172a;
-        --border:rgba(255,255,255,.10);
-        --text:#e5e7eb;
-        --muted:#9ca3af;
-        --accent:#60a5fa;
-        --good:#34d399;
-        --bad:#fb7185;
-        --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      }
-      *{box-sizing:border-box}
-      html,body{height:100%}
-      body{
-        margin:0;
-        background: #0b3a7a;
-        color:var(--text);
-        font: 14px/1.35 system-ui, -apple-system, Segoe UI, Ubuntu, Cantarell, Noto Sans, Arial, sans-serif;
-      }
-      .wrap{
-        display:grid;
-        grid-template-columns: var(--leftW, 360px) 10px 1fr;
-        gap: 14px;
-        padding: 16px;
-        height:100%;
-        min-height: 520px;
-      }
-      .panel{
-        border:1px solid var(--border);
-        background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
-        border-radius: 14px;
-        overflow:hidden;
-        box-shadow: 0 10px 40px rgba(0,0,0,.35);
-        min-height: 0; /* allow internal scrolling */
-        display:flex;
-        flex-direction:column;
-      }
-      .panel .hdr{
-        padding: 14px 14px 10px;
-        border-bottom:1px solid var(--border);
-        background: rgba(0,0,0,.12);
-      }
-      .panel .hdr h1{
-        font-size: 14px;
-        margin:0;
-        letter-spacing:.2px;
-        font-weight: 650;
-      }
-      .panel .hdr p{
-        margin:6px 0 0;
-        color:var(--muted);
-        font-size:12px;
-      }
-      .panel .bd{
-        padding:14px;
-        overflow:auto;
-        min-height: 0;
-        scrollbar-width: thin;
-      }
-      .panel .bd::-webkit-scrollbar{width:10px}
-      .panel .bd::-webkit-scrollbar-thumb{background: rgba(255,255,255,.10); border-radius: 99px}
-      label{display:block; font-size:12px; color:var(--muted); margin: 12px 0 6px}
-      textarea, input[type="text"], select{
-        width:100%;
-        color:var(--text);
-        background: rgba(0,0,0,.22);
-        border:1px solid var(--border);
-        border-radius: 10px;
-        padding: 10px 10px;
-        outline:none;
-      }
-      textarea{min-height:72px; resize:vertical; font-family: var(--mono); font-size: 12px; line-height:1.35}
-      .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-      .row > *{flex:1}
-      .btnrow{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
-      button{
-        appearance:none;
-        border:1px solid var(--border);
-        background: rgba(255,255,255,.06);
-        color:var(--text);
-        padding: 9px 10px;
-        border-radius: 10px;
-        cursor:pointer;
-        font-weight: 600;
-        letter-spacing:.1px;
-      }
-      button:hover{border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.08)}
-      button.primary{border-color: rgba(96,165,250,.55); background: rgba(96,165,250,.16)}
-      button.primary:hover{background: rgba(96,165,250,.22)}
-      button.good{border-color: rgba(52,211,153,.55); background: rgba(52,211,153,.13)}
-      button.bad{border-color: rgba(251,113,133,.55); background: rgba(251,113,133,.13)}
-      button:disabled{opacity:.45; cursor:not-allowed}
-      .hint{
-        margin-top:10px;
-        color: var(--muted);
-        font-size: 12px;
-      }
-      .err{
-        margin-top:10px;
-        color: var(--bad);
-        font-size: 12px;
-        white-space: pre-wrap;
-        font-family: var(--mono);
-      }
-      .kv{
-        display:flex;
-        justify-content:space-between;
-        gap:10px;
-        font-size:12px;
-        color:var(--muted);
-        margin-top: 10px;
-        font-family: var(--mono);
-      }
-      .slider{
-        display:flex;
-        align-items:center;
-        gap:10px;
-      }
-      input[type="range"]{width:100%}
-      .stage{
-        position:relative;
-        border:1px solid var(--border);
-        border-radius: 14px;
-        overflow:hidden;
-        background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.08));
-        min-height: 0;
-      }
-      #view{
-        width:100%;
-        height:100%;
-        display:block;
-      }
-      .hud{
-        position:absolute;
-        left:14px;
-        right:14px;
-        bottom:12px;
-        display:flex;
-        justify-content:space-between;
-        gap:12px;
-        pointer-events:none;
-      }
-      .pill{
-        pointer-events:none;
-        padding: 8px 10px;
-        border-radius: 999px;
-        border:1px solid var(--border);
-        background: rgba(0,0,0,.35);
-        color: var(--text);
-        font-family: var(--mono);
-        font-size: 12px;
-      }
-      .pill b{color: white}
-      .seq{
-        margin-top:12px;
-        border:1px solid var(--border);
-        background: rgba(0,0,0,.20);
-        border-radius: 12px;
-        padding: 10px;
-      }
-      .seqtop{
-        display:grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap:10px;
-        color:var(--muted);
-        font-family: var(--mono);
-        font-size: 12px;
-        margin-bottom: 8px;
-      }
-      .seqtop b{color: var(--text)}
-      .seqstrip{
-        display:flex;
-        gap:6px;
-        flex-wrap:nowrap;
-        overflow:auto;
-        padding-bottom: 6px;
-        scrollbar-width: thin;
-      }
-      .seqstrip::-webkit-scrollbar{height:8px}
-      .seqstrip::-webkit-scrollbar-thumb{background: rgba(255,255,255,.12); border-radius: 99px}
-      .movechip{
-        flex:0 0 auto;
-        border:1px solid var(--border);
-        background: rgba(255,255,255,.06);
-        padding: 6px 8px;
-        border-radius: 999px;
-        font-family: var(--mono);
-        font-size: 12px;
-        color: var(--text);
-        user-select:none;
-        white-space:nowrap;
-      }
-      .movechip.done{opacity:.45}
-      .movechip.next{border-color: rgba(96,165,250,.70); background: rgba(96,165,250,.16)}
-      .movechip.exec{border-color: rgba(52,211,153,.70); background: rgba(52,211,153,.14)}
 
-      .manualgrid{
-        display:grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-        gap:8px;
-        margin-top: 6px;
-      }
-      .manualgrid button{
-        padding: 7px 8px;
-        font-family: var(--mono);
-        font-size: 12px;
-      }
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rubik's Cube Visualizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
 
-      .mini{
-        position:absolute;
-        top: 14px;
-        right: 14px;
-        width: var(--miniSize, 180px);
-        height: var(--miniSize, 180px);
-        border-radius: 14px;
-        overflow:hidden;
-        border:1px solid var(--border);
-        background: rgba(0,0,0,.28);
-        box-shadow: 0 10px 35px rgba(0,0,0,.35);
-      }
-      #miniView{width:100%; height:100%; display:block}
-      .miniTag{
-        position:absolute;
-        left:10px;
-        top:10px;
-        padding: 6px 8px;
-        border-radius: 999px;
-        border:1px solid var(--border);
-        background: rgba(0,0,0,.35);
-        font-family: var(--mono);
-        font-size: 11px;
-        color: var(--text);
-        pointer-events:none;
-      }
-      @media (max-width: 920px){
-        .wrap{
-          grid-template-columns: 1fr;
-          grid-template-rows: auto 1fr;
-        }
-        .splitter{display:none}
-      }
-
-      .splitter{
-        position:relative;
-        border-radius: 999px;
-        cursor: col-resize;
-        user-select:none;
-        touch-action:none;
-        background: rgba(255,255,255,.05);
-        border:1px solid rgba(255,255,255,.10);
-      }
-      .splitter:hover{background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14)}
-      .splitter:active{background: rgba(96,165,250,.22); border-color: rgba(96,165,250,.30)}
-      .splitter::after{
-        content:"";
-        position:absolute;
-        top: 50%;
-        left:50%;
-        width: 4px;
-        height: 42px;
-        transform: translate(-50%, -50%);
-        border-radius: 99px;
-        background: rgba(255,255,255,.12);
-        box-shadow: 0 0 0 1px rgba(0,0,0,.18) inset;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="wrap">
-      <div class="panel">
-        <div class="hdr">
-          <h1>Rubik’s Cube Visualizer</h1>
-          <p>Paste <b>scramble</b> + <b>solve</b> algorithms. Drag to rotate the whole cube. Step moves forward/back with animation.</p>
+<body>
+  <div class="h-screen min-h-[520px] p-4 bg-blue-900 text-gray-100">
+    <div id="layout" class="h-full flex gap-3.5">
+      <!-- left panel -->
+      <div id="leftPanel"
+        class="h-full w-[360px] min-w-[260px] max-w-[720px] rounded-2xl border border-white/10 bg-white/5 shadow-[0_10px_40px_rgba(0,0,0,.35)] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-3.5 pt-3.5 pb-3 border-b border-white/10 bg-black/15">
+          <div class="text-sm font-semibold tracking-wide">Rubik's Cube Visualizer</div>
+          <div class="mt-1 text-xs text-gray-300/90">
+            Paste <span class="font-semibold text-gray-100">scramble</span> + <span
+              class="font-semibold text-gray-100">solve</span>. Drag to rotate. Step forward/back with animation.
+          </div>
         </div>
-        <div class="bd">
-          <label for="scramble">Scramble algorithm</label>
-          <textarea id="scramble" spellcheck="false">R U R' U'</textarea>
+        <div class="min-h-0 flex-1 overflow-auto px-3.5 py-3.5">
+          <label for="scramble" class="block text-xs text-gray-300 mb-1.5">Scramble algorithm</label>
+          <textarea id="scramble" spellcheck="false"
+            class="w-full min-h-[72px] resize-y rounded-xl border border-white/10 bg-black/25 px-3 py-2.5 outline-none font-mono text-xs leading-snug">R U R' U'</textarea>
 
-          <label for="solve">Solve algorithm</label>
-          <textarea id="solve" spellcheck="false">U R U' R'</textarea>
+          <label for="solve" class="block text-xs text-gray-300 mb-1.5 mt-3">Solve algorithm</label>
+          <textarea id="solve" spellcheck="false"
+            class="w-full min-h-[72px] resize-y rounded-xl border border-white/10 bg-black/25 px-3 py-2.5 outline-none font-mono text-xs leading-snug">U R U' R'</textarea>
 
-          <div class="btnrow">
-            <button id="btnLoad" class="primary">Load sequence</button>
-            <button id="btnResetCube" class="bad" title="Reset to solved cube">Reset cube</button>
-            <button id="btnResetView" title="Reset camera">Reset view</button>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button id="btnLoad"
+              class="rounded-xl border border-sky-300/40 bg-sky-300/15 px-3 py-2 text-sm font-semibold hover:bg-sky-300/20">Load
+              sequence</button>
+            <button id="btnResetCube" title="Reset to solved cube"
+              class="rounded-xl border border-rose-300/40 bg-rose-300/15 px-3 py-2 text-sm font-semibold hover:bg-rose-300/20">Reset
+              cube</button>
+            <button id="btnResetView" title="Reset camera"
+              class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10">Reset
+              view</button>
           </div>
 
-          <label>Playback</label>
-          <div class="btnrow">
-            <button id="btnBack" class="" title="Step back (inverse last move)">◀ Back</button>
-            <button id="btnStep" class="" title="Step forward">Step ▶</button>
-            <button id="btnPlay" class="good" title="Play from current position">Play</button>
-            <button id="btnPause" title="Pause">Pause</button>
-            <button id="btnScrambleOnly" title="Reset then run only the scramble part">Scramble only</button>
-            <button id="btnSolveOnly" title="Run only the solve part (from current state)">Solve only</button>
+          <div class="mt-4 text-xs text-gray-300">Playback</div>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <button id="btnBack" title="Step back (inverse last move)"
+              class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10">◀
+              Back</button>
+            <button id="btnStep" title="Step forward"
+              class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10">Step
+              ▶</button>
+            <button id="btnPlay" title="Play from current position"
+              class="rounded-xl border border-emerald-300/40 bg-emerald-300/15 px-3 py-2 text-sm font-semibold hover:bg-emerald-300/20">Play</button>
+            <button id="btnPause" title="Pause"
+              class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10">Pause</button>
+            <button id="btnScrambleOnly" title="Reset then run only the scramble part"
+              class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10">Scramble
+              only</button>
+            <button id="btnSolveOnly" title="Run only the solve part (from current state)"
+              class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10">Solve
+              only</button>
           </div>
 
-          <div class="seq">
-            <div class="seqtop">
-              <div>prev: <b id="prevMove">—</b></div>
-              <div style="text-align:center">now: <b id="curMove">—</b></div>
-              <div style="text-align:right">next: <b id="nextMove">—</b></div>
+          <div class="mt-3 rounded-xl border border-white/10 bg-black/20 p-2.5">
+            <div class="grid grid-cols-3 gap-2 text-gray-300 font-mono text-xs">
+              <div>prev: <b id="prevMove" class="text-gray-100">—</b></div>
+              <div class="text-center">now: <b id="curMove" class="text-gray-100">—</b></div>
+              <div class="text-right">next: <b id="nextMove" class="text-gray-100">—</b></div>
             </div>
-            <div id="seqStrip" class="seqstrip" aria-label="Move sequence"></div>
+            <div id="seqStrip" class="mt-2 flex gap-1.5 overflow-auto pb-1" aria-label="Move sequence"></div>
           </div>
 
-          <label>Move speed</label>
-          <div class="slider">
-            <input id="speed" type="range" min="80" max="900" step="10" value="240" />
-            <div style="min-width:88px; text-align:right; font-family:var(--mono)" id="speedLabel">240 ms</div>
+          <div class="mt-4 text-xs text-gray-300">Move speed</div>
+          <div class="mt-2 flex items-center gap-2">
+            <input id="speed" type="range" min="80" max="900" step="10" value="240" class="w-full" />
+            <div id="speedLabel" class="min-w-[88px] text-right font-mono text-xs text-gray-200">240 ms</div>
           </div>
 
-          <label>Back view size</label>
-          <div class="slider">
-            <input id="miniSize" type="range" min="120" max="320" step="10" value="180" />
-            <div style="min-width:88px; text-align:right; font-family:var(--mono)" id="miniSizeLabel">180 px</div>
+          <div class="mt-4 text-xs text-gray-300">Back view size</div>
+          <div class="mt-2 flex items-center gap-2">
+            <input id="miniSize" type="range" min="120" max="320" step="10" value="180" class="w-full" />
+            <div id="miniSizeLabel" class="min-w-[88px] text-right font-mono text-xs text-gray-200">180 px</div>
           </div>
 
-          <label>Manual move</label>
-          <div id="manualGrid" class="manualgrid" aria-label="Manual moves"></div>
+          <div class="mt-4 text-xs text-gray-300">Manual move</div>
+          <div id="manualGrid" class="mt-2 grid grid-cols-6 gap-2" aria-label="Manual moves"></div>
 
-          <div class="hint">
-            Keys: <b>Space</b> play/pause, <b>←</b>/<b>→</b> step, <b>Backspace</b> undo.
-            Moves supported: <span style="font-family:var(--mono)">R L U D F B</span> with <span style="font-family:var(--mono)">'</span> and <span style="font-family:var(--mono)">2</span>.
+          <div class="mt-3 text-xs text-gray-300/90">
+            Keys: <b class="text-gray-100">Space</b> play/pause, <b class="text-gray-100">←</b>/<b
+              class="text-gray-100">→</b> step, <b class="text-gray-100">Backspace</b> undo.
+            Moves: <span class="font-mono">R L U D F B</span> with <span class="font-mono">'</span> and <span
+              class="font-mono">2</span>.
           </div>
-          <div class="kv">
+          <div class="mt-2 flex items-center justify-between gap-3 text-xs font-mono text-gray-300">
             <div id="status">Ready</div>
             <div id="pos">0 / 0</div>
           </div>
-          <div id="error" class="err"></div>
+          <div id="error" class="mt-2 text-xs font-mono text-rose-300 whitespace-pre-wrap"></div>
         </div>
       </div>
 
-      <div id="splitter" class="splitter" title="Drag to resize panel"></div>
-
-      <div class="stage">
-        <canvas id="view"></canvas>
-        <div id="mini" class="mini">
-          <canvas id="miniView"></canvas>
-          <div class="miniTag">back view</div>
+      <!-- splitter -->
+      <div id="splitter" title="Drag to resize panel"
+        class="hidden md:block w-2 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 active:bg-sky-300/20 cursor-col-resize select-none touch-none relative">
+        <div class="absolute left-1/2 top-1/2 h-10 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/15">
         </div>
-        <div class="hud">
-          <div class="pill"><b>Drag</b> rotate • <b>Scroll</b> zoom</div>
-          <div class="pill" id="pillMove">Move: <b>—</b></div>
+      </div>
+
+      <!-- stage -->
+      <div
+        class="min-w-0 flex-1 relative rounded-2xl border border-white/10 bg-white/5 shadow-[0_10px_40px_rgba(0,0,0,.35)] overflow-hidden">
+        <canvas id="view" class="w-full h-full block"></canvas>
+
+        <div id="mini"
+          class="absolute right-3.5 top-3.5 rounded-2xl border border-white/10 bg-black/25 shadow-[0_10px_35px_rgba(0,0,0,.35)] overflow-hidden">
+          <canvas id="miniView" class="w-full h-full block"></canvas>
+          <div
+            class="absolute left-2.5 top-2.5 rounded-full border border-white/10 bg-black/35 px-2 py-1 font-mono text-[11px] text-gray-100 pointer-events-none">
+            back view</div>
+        </div>
+
+        <div class="absolute left-3.5 right-3.5 bottom-3 flex justify-between gap-3 pointer-events-none">
+          <div class="rounded-full border border-white/10 bg-black/35 px-2.5 py-2 font-mono text-xs">
+            <b class="text-gray-100">Drag</b> rotate • <b class="text-gray-100">Scroll</b> zoom
+          </div>
+          <div id="pillMove" class="rounded-full border border-white/10 bg-black/35 px-2.5 py-2 font-mono text-xs">
+            Move: <b class="text-gray-100">—</b>
+          </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <script type="module" src="./index.js"></script>
-  </body>
+  <script type="module" src="./index.js"></script>
+</body>
+
 </html>
