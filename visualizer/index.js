@@ -44,6 +44,10 @@ const elErr = document.getElementById('error');
 const elStatus = document.getElementById('status');
 const elPos = document.getElementById('pos');
 const elPillMove = document.getElementById('pillMove');
+const elPrevMove = document.getElementById('prevMove');
+const elCurMove = document.getElementById('curMove');
+const elNextMove = document.getElementById('nextMove');
+const elSeqStrip = document.getElementById('seqStrip');
 
 const btnLoad = document.getElementById('btnLoad');
 const btnResetCube = document.getElementById('btnResetCube');
@@ -52,18 +56,26 @@ const btnBack = document.getElementById('btnBack');
 const btnStep = document.getElementById('btnStep');
 const btnPlay = document.getElementById('btnPlay');
 const btnPause = document.getElementById('btnPause');
+const btnScrambleOnly = document.getElementById('btnScrambleOnly');
+const btnSolveOnly = document.getElementById('btnSolveOnly');
 const elSpeed = document.getElementById('speed');
 const elSpeedLabel = document.getElementById('speedLabel');
-const elManualMove = document.getElementById('manualMove');
-const btnManual = document.getElementById('btnManual');
+const elManualGrid = document.getElementById('manualGrid');
+const elMini = document.getElementById('mini');
+const elMiniSize = document.getElementById('miniSize');
+const elMiniSizeLabel = document.getElementById('miniSizeLabel');
+const elSplitter = document.getElementById('splitter');
 
 const state = {
   sequence: [],
+  scrambleMoves: [],
+  solveMoves: [],
   seqIndex: 0,
   playing: false,
   busy: false,
   playTimer: null,
   appliedHistory: [], // actual moves applied in the current cube state (including manual)
+  executingSeqIndex: null, // index in sequence currently animating
 };
 
 function setError(msg) {
@@ -85,6 +97,13 @@ function setSpeedLabel() {
 setSpeedLabel();
 elSpeed.addEventListener('input', setSpeedLabel);
 
+function setMiniSizeLabel() {
+  elMiniSizeLabel.textContent = `${Number(elMiniSize.value)} px`;
+  elMini.style.setProperty('--miniSize', `${Number(elMiniSize.value)}px`);
+}
+setMiniSizeLabel();
+elMiniSize.addEventListener('input', setMiniSizeLabel);
+
 // --- THREE scene
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
@@ -95,6 +114,12 @@ scene.fog = new THREE.Fog(0x07080b, 8, 24);
 
 const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
 camera.position.set(7.5, 6.0, 7.5);
+
+const miniCanvas = document.getElementById('miniView');
+const miniRenderer = new THREE.WebGLRenderer({ canvas: miniCanvas, antialias: true, alpha: true });
+miniRenderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+miniRenderer.outputColorSpace = THREE.SRGBColorSpace;
+const miniCamera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
 
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
@@ -175,9 +200,24 @@ function resize() {
 new ResizeObserver(resize).observe(canvas);
 resize();
 
+function resizeMini() {
+  const { clientWidth: w, clientHeight: h } = miniCanvas;
+  if (w === 0 || h === 0) return;
+  miniRenderer.setSize(w, h, false);
+  miniCamera.aspect = w / h;
+  miniCamera.updateProjectionMatrix();
+}
+new ResizeObserver(resizeMini).observe(miniCanvas);
+resizeMini();
+
 function animateFrame() {
   controls.update();
   renderer.render(scene, camera);
+  // mirrored "back view" camera
+  miniCamera.position.copy(camera.position).multiplyScalar(-1);
+  miniCamera.up.copy(camera.up);
+  miniCamera.lookAt(0, 0, 0);
+  miniRenderer.render(scene, miniCamera);
   requestAnimationFrame(animateFrame);
 }
 requestAnimationFrame(animateFrame);
@@ -226,7 +266,7 @@ function withLockedUI(fn) {
   updateButtons();
   return Promise.resolve()
     .then(fn)
-    .finally(() => { state.busy = false; updateButtons(); });
+    .finally(() => { state.busy = false; state.executingSeqIndex = null; updateButtons(); updateSequenceUI(); });
 }
 
 function applyMoveAnimated(move) {
@@ -271,11 +311,50 @@ function applyMoveAnimated(move) {
   });
 }
 
+function renderSequenceStrip() {
+  elSeqStrip.innerHTML = '';
+  if (!state.sequence.length) return;
+  const frag = document.createDocumentFragment();
+  state.sequence.forEach((m, idx) => {
+    const span = document.createElement('span');
+    span.className = 'movechip';
+    span.dataset.idx = String(idx);
+    span.textContent = m;
+    frag.appendChild(span);
+  });
+  elSeqStrip.appendChild(frag);
+}
+
+function updateSequenceUI() {
+  const histLast = state.appliedHistory.length ? state.appliedHistory[state.appliedHistory.length - 1] : null;
+  const prev = state.seqIndex >= 2 ? state.sequence[state.seqIndex - 2] : (state.seqIndex === 1 ? state.sequence[0] : null);
+  const next = state.seqIndex < state.sequence.length ? state.sequence[state.seqIndex] : null;
+
+  elPrevMove.textContent = prev || '—';
+  elCurMove.textContent = histLast || '—';
+  elNextMove.textContent = next || '—';
+
+  const chips = elSeqStrip.querySelectorAll('.movechip');
+  chips.forEach((chip) => {
+    const idx = Number(chip.dataset.idx);
+    chip.classList.toggle('done', idx < state.seqIndex);
+    chip.classList.toggle('next', idx === state.seqIndex);
+    chip.classList.toggle('exec', idx === state.executingSeqIndex);
+  });
+
+  const activeIdx = state.executingSeqIndex ?? state.seqIndex;
+  if (activeIdx != null && activeIdx >= 0 && activeIdx < state.sequence.length) {
+    const el = elSeqStrip.querySelector(`.movechip[data-idx="${activeIdx}"]`);
+    if (el) el.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
+}
+
 function resetCube() {
   state.sequence = [];
   state.seqIndex = 0;
   state.playing = false;
   state.appliedHistory = [];
+  state.executingSeqIndex = null;
   if (state.playTimer) { clearTimeout(state.playTimer); state.playTimer = null; }
 
   for (const c of cubies) {
@@ -288,6 +367,8 @@ function resetCube() {
   setStatus('Reset to solved');
   updateHUD();
   updateButtons();
+  renderSequenceStrip();
+  updateSequenceUI();
 }
 
 function resetView() {
@@ -304,15 +385,37 @@ function updateHUD() {
 function updateButtons() {
   const canStepFwd = !state.busy && state.seqIndex < state.sequence.length;
   const canUndo = !state.busy && state.appliedHistory.length > 0;
+  const canScrambleOnly = !state.busy && state.scrambleMoves.length > 0;
+  const canSolveOnly = !state.busy && state.solveMoves.length > 0;
 
   btnLoad.disabled = state.busy;
   btnResetCube.disabled = state.busy;
   btnResetView.disabled = state.busy;
-  btnManual.disabled = state.busy;
+  // manual buttons
+  for (const b of elManualGrid.querySelectorAll('button')) b.disabled = state.busy;
   btnStep.disabled = !canStepFwd;
   btnBack.disabled = !canUndo;
   btnPlay.disabled = state.busy || state.sequence.length === 0;
   btnPause.disabled = state.busy || !state.playing;
+  btnScrambleOnly.disabled = !canScrambleOnly;
+  btnSolveOnly.disabled = !canSolveOnly;
+}
+
+async function runMoves(moves, startSeqIndex) {
+  if (state.busy) return;
+  for (let i = 0; i < moves.length; i++) {
+    const m = moves[i];
+    state.executingSeqIndex = startSeqIndex + i;
+    updateSequenceUI();
+    setStatus(`Run: ${m}`);
+    setError('');
+    await applyMoveAnimated(m);
+    state.appliedHistory.push(m);
+    state.seqIndex = Math.max(state.seqIndex, startSeqIndex + i + 1);
+    updateHUD();
+    updateButtons();
+    updateSequenceUI();
+  }
 }
 
 async function stepForward() {
@@ -321,11 +424,14 @@ async function stepForward() {
   const m = state.sequence[state.seqIndex];
   setStatus(`Step: ${m}`);
   setError('');
+  state.executingSeqIndex = state.seqIndex;
+  updateSequenceUI();
   await applyMoveAnimated(m);
   state.appliedHistory.push(m);
   state.seqIndex++;
   updateHUD();
   updateButtons();
+  updateSequenceUI();
 }
 
 async function undoOne() {
@@ -339,6 +445,7 @@ async function undoOne() {
   if (state.seqIndex > 0 && state.sequence[state.seqIndex - 1] === last) state.seqIndex--;
   updateHUD();
   updateButtons();
+  updateSequenceUI();
 }
 
 function pause() {
@@ -381,16 +488,20 @@ function loadSequence() {
     setError(String(e?.message || e));
     return;
   }
+  state.scrambleMoves = scramble;
+  state.solveMoves = solve;
   state.sequence = [...scramble, ...solve];
   state.seqIndex = 0;
+  state.executingSeqIndex = null;
   setStatus(`Loaded: ${scramble.length} scramble + ${solve.length} solve`);
   updateHUD();
   updateButtons();
+  renderSequenceStrip();
+  updateSequenceUI();
 }
 
-async function applyManual() {
+async function applyManualMove(m) {
   if (state.busy) return;
-  const m = String(elManualMove.value || '').trim();
   if (!VALID_MOVES.has(m)) { setError(`Invalid move: ${m}`); return; }
   setStatus(`Manual: ${m}`);
   setError('');
@@ -398,6 +509,7 @@ async function applyManual() {
   state.appliedHistory.push(m);
   updateHUD();
   updateButtons();
+  updateSequenceUI();
 }
 
 btnLoad.addEventListener('click', loadSequence);
@@ -407,7 +519,26 @@ btnStep.addEventListener('click', () => { pause(); stepForward(); });
 btnBack.addEventListener('click', () => { pause(); undoOne(); });
 btnPlay.addEventListener('click', play);
 btnPause.addEventListener('click', pause);
-btnManual.addEventListener('click', () => { pause(); applyManual(); });
+btnScrambleOnly.addEventListener('click', async () => {
+  pause();
+  if (state.busy) return;
+  resetCube();
+  // keep loaded sequence; resetCube clears it, so restore UI state
+  // (scramble/solve inputs remain, so just reload parsing)
+  loadSequence();
+  await runMoves(state.scrambleMoves, 0);
+});
+btnSolveOnly.addEventListener('click', async () => {
+  pause();
+  if (state.busy) return;
+  // If the user is earlier in the sequence, jump the cursor to the solve section,
+  // but do not mutate the cube state (solver should run "from current state").
+  const solveStart = state.scrambleMoves.length;
+  state.seqIndex = Math.max(state.seqIndex, solveStart);
+  updateHUD();
+  updateSequenceUI();
+  await runMoves(state.solveMoves, solveStart);
+});
 
 document.addEventListener('keydown', (e) => {
   const tag = (e.target && e.target.tagName) ? e.target.tagName.toUpperCase() : '';
@@ -418,8 +549,70 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Backspace') { e.preventDefault(); pause(); undoOne(); }
 });
 
+function buildManualButtons() {
+  const moves = [
+    'R', "R'", 'R2',
+    'L', "L'", 'L2',
+    'U', "U'", 'U2',
+    'D', "D'", 'D2',
+    'F', "F'", 'F2',
+    'B', "B'", 'B2',
+  ];
+  elManualGrid.innerHTML = '';
+  for (const m of moves) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = m;
+    b.title = `Apply ${m}`;
+    b.addEventListener('click', () => { pause(); applyManualMove(m); });
+    elManualGrid.appendChild(b);
+  }
+}
+
 // init
 resetView();
 controls.saveState();
+buildManualButtons();
 resetCube();
 loadSequence();
+
+// resizable split
+{
+  const KEY = 'rubik.leftW';
+  const root = document.documentElement;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+  function applyW(w) {
+    root.style.setProperty('--leftW', `${Math.round(w)}px`);
+  }
+
+  const saved = Number(localStorage.getItem(KEY));
+  if (Number.isFinite(saved) && saved > 0) applyW(saved);
+
+  let drag = null;
+  elSplitter.addEventListener('pointerdown', (e) => {
+    if (window.matchMedia && window.matchMedia('(max-width: 920px)').matches) return;
+    elSplitter.setPointerCapture(e.pointerId);
+    const base = root.getBoundingClientRect();
+    const current = parseFloat(getComputedStyle(root).getPropertyValue('--leftW')) || 360;
+    drag = { startX: e.clientX, startW: current, baseW: base.width };
+    e.preventDefault();
+  });
+
+  elSplitter.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const dx = e.clientX - drag.startX;
+    const minW = 260;
+    const maxW = clamp(drag.baseW - 360, 320, 720);
+    const next = clamp(drag.startW + dx, minW, maxW);
+    applyW(next);
+    e.preventDefault();
+  });
+
+  window.addEventListener('pointerup', () => {
+    if (!drag) return;
+    const w = parseFloat(getComputedStyle(root).getPropertyValue('--leftW')) || 360;
+    localStorage.setItem(KEY, String(Math.round(w)));
+    drag = null;
+  });
+}
