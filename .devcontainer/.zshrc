@@ -11,5 +11,7 @@ zstyle ':omz:plugins:alias-finder' cheaper yes
 
 alias l=ls
 alias c=clear
+alias v='make v'
+alias r='make run'
 
 source $ZSH/oh-my-zsh.sh

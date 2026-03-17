@@ -3,12 +3,12 @@ import { OrbitControls } from 'https://esm.sh/three@0.161.0/examples/jsm/control
 import { MOVE_DEF, VALID_MOVES } from './moves.js';
 
 const FACE = {
-  U: 0xFFFFFF,
-  D: 0xFFD500,
-  F: 0x009B48,
-  B: 0x0046AD,
-  L: 0xFF5900,
-  R: 0xB71234,
+  U: 0xE7E7E7,
+  D: 0xD7B100,
+  F: 0x0B7A45,
+  B: 0x1B3F8B,
+  L: 0xD24E00,
+  R: 0x8F1E2E,
 };
 
 const spacing = 1.05;
@@ -30,7 +30,7 @@ function makeStickerMaterial(color) {
   return new THREE.MeshBasicMaterial({ color });
 }
 
-const matBlank = new THREE.MeshBasicMaterial({ color: 0x101010 });
+const matBlank = new THREE.MeshBasicMaterial({ color: 0x141414 });
 const mats = {
   U: makeStickerMaterial(FACE.U),
   D: makeStickerMaterial(FACE.D),
@@ -40,7 +40,7 @@ const mats = {
   R: makeStickerMaterial(FACE.R),
 };
 
-function materialsForCubie(x, y, z) {
+function materialsForCube(x, y, z) {
   // BoxGeometry face order: +X, -X, +Y, -Y, +Z, -Z
   return [
     x === 1 ? mats.R : matBlank,
@@ -52,7 +52,7 @@ function materialsForCubie(x, y, z) {
   ];
 }
 
-function normalizeCubieTransform(c, root) {
+function normalizeCubeTransform(c, root) {
   root.attach(c);
   const cx = snapCoord(c.position.x / spacing);
   const cy = snapCoord(c.position.y / spacing);
@@ -84,15 +84,15 @@ export function createScene({ canvas }) {
   const cubeRoot = new THREE.Group();
   scene.add(cubeRoot);
 
-  const cubies = [];
+  const cubes = [];
   const geom = new THREE.BoxGeometry(0.98, 0.98, 0.98);
   for (const x of [-1, 0, 1]) for (const y of [-1, 0, 1]) for (const z of [-1, 0, 1]) {
-    const mesh = new THREE.Mesh(geom, materialsForCubie(x, y, z));
+    const mesh = new THREE.Mesh(geom, materialsForCube(x, y, z));
     mesh.position.set(x * spacing, y * spacing, z * spacing);
     mesh.userData.homeCoord = { x, y, z };
     mesh.userData.coord = { x, y, z };
     cubeRoot.add(mesh);
-    cubies.push(mesh);
+    cubes.push(mesh);
   }
 
   function resize() {
@@ -120,7 +120,7 @@ export function createScene({ canvas }) {
   }
 
   function resetCube() {
-    for (const c of cubies) {
+    for (const c of cubes) {
       const { x, y, z } = c.userData.homeCoord;
       c.position.set(x * spacing, y * spacing, z * spacing);
       c.rotation.set(0, 0, 0);
@@ -128,8 +128,8 @@ export function createScene({ canvas }) {
     }
   }
 
-  function cubiesInLayer(axis, layer) {
-    return cubies.filter(c => c.userData.coord[axis] === layer);
+  function cubesInLayer(axis, layer) {
+    return cubes.filter(c => c.userData.coord[axis] === layer);
   }
 
   async function applyMoveAnimated(move, durationMs) {
@@ -143,8 +143,8 @@ export function createScene({ canvas }) {
     const quarterTurn = () => new Promise(resolve => {
       const pivot = new THREE.Group();
       cubeRoot.add(pivot);
-      const layerCubies = cubiesInLayer(axis, layer);
-      for (const c of layerCubies) pivot.attach(c);
+      const layerCubes = cubesInLayer(axis, layer);
+      for (const c of layerCubes) pivot.attach(c);
 
       const dur = Math.max(60, Number(durationMs) || 240);
       const start = performance.now();
@@ -156,7 +156,7 @@ export function createScene({ canvas }) {
         pivot.setRotationFromAxisAngle(ax, target * eased);
         if (t < 1) return requestAnimationFrame(tick);
         pivot.setRotationFromAxisAngle(ax, target);
-        for (const c of layerCubies) normalizeCubieTransform(c, cubeRoot);
+        for (const c of layerCubes) normalizeCubeTransform(c, cubeRoot);
         cubeRoot.remove(pivot);
         resolve();
       };
