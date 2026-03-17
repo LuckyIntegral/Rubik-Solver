@@ -44,9 +44,12 @@ run		:
 		$(MAKE) re
 		./$(NAME)
 
-visual	:
-		node visualizer/server.js
+v		:
+		$(MAKE) visualizer
+
+visualizer	:
+		node --watch --watch-path=server.js --watch-path=visualizer server.js
 
 -include $(DEPS)
 
-.PHONY: all clean fclean bonus re run
+.PHONY: all clean fclean bonus re run visualizer v
