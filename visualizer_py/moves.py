@@ -65,14 +65,7 @@ def invert_move(move: str) -> str:
 
 
 def get_move_params(move: str) -> dict:
-    """Get parameters for applying a move.
-
-    Args:
-        move: A valid move string
-
-    Returns:
-        Dictionary with axis, layer, direction, and number of turns
-    """
+    """ Get parameters for applying a move """
     base = move[0]
     turns = 2 if move.endswith('2') else 1
     base_def = MOVE_DEF[base]
