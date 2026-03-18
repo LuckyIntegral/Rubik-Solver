@@ -58,6 +58,9 @@ class CubeVisualizer:
         self.last_exec_time_ms: Optional[float] = None
         self.last_exec_input = ""
         self.scramble_len_text = "20"
+        self.algo_options = ["algoA", "algoB"]
+        self.selected_algo = self.algo_options[0]
+        self.algo_dropdown_open = False
 
         self.sequence: List[str] = []
         self.scramble_moves: List[str] = []
@@ -136,7 +139,10 @@ class CubeVisualizer:
         y += btn_h + gap
 
         self.rects["run_solver"] = pygame.Rect(margin, y, self.panel_width - margin * 2, btn_h)
-        y += btn_h + 22
+        y += btn_h + gap
+
+        self.rects["algo_dropdown"] = pygame.Rect(margin, y, self.panel_width - margin * 2, btn_h)
+        y += btn_h + 16
 
         self.rects["speed_track"] = pygame.Rect(margin, y + 18, self.panel_width - margin * 2 - 90, 10)
         self.rects["speed_label"] = pygame.Rect(self.rects["speed_track"].right + 10, y + 7, 82, 22)
@@ -297,6 +303,19 @@ class CubeVisualizer:
         return not self.busy
 
     def _handle_panel_click(self, pos):
+        if self.rects["algo_dropdown"].collidepoint(pos):
+            self.algo_dropdown_open = not self.algo_dropdown_open
+            return
+
+        if self.algo_dropdown_open:
+            for idx, algo in enumerate(self.algo_options):
+                if self._algo_option_rect(idx).collidepoint(pos):
+                    self.selected_algo = algo
+                    self.algo_dropdown_open = False
+                    self.status_text = f"Algorithm: {algo}"
+                    return
+            self.algo_dropdown_open = False
+
         if self.rects["scramble_input"].collidepoint(pos):
             self.active_input = "scramble"
             return
@@ -436,7 +455,7 @@ class CubeVisualizer:
 
         start = time.perf_counter()
         result = subprocess.run(
-            [str(solver_path), move_text],
+            [str(solver_path), "-a", self.selected_algo, move_text],
             capture_output=True,
             text=True,
             check=False,
@@ -659,6 +678,35 @@ class CubeVisualizer:
         for rect, move in self.manual_buttons:
             self._draw_button(surface, rect, move, enabled=not self.busy)
 
+    def _algo_option_rect(self, idx: int) -> pygame.Rect:
+        base = self.rects["algo_dropdown"]
+        return pygame.Rect(base.left, base.bottom + 4 + idx * (base.height + 2), base.width, base.height)
+
+    def _draw_algo_dropdown(self, surface):
+        rect = self.rects["algo_dropdown"]
+
+        fill = (34, 37, 52) if self.algo_dropdown_open else (26, 28, 39)
+        border = (122, 138, 210) if self.algo_dropdown_open else (88, 95, 132)
+        pygame.draw.rect(surface, fill, rect, border_radius=10)
+        pygame.draw.rect(surface, border, rect, 1, border_radius=10)
+
+        selected = self._fonts["mono"].render(self.selected_algo, True, (232, 235, 245))
+        arrow = self._fonts["mono"].render("v" if not self.algo_dropdown_open else "^", True, (182, 192, 220))
+        surface.blit(selected, (rect.left + 10, rect.centery - selected.get_height() // 2))
+        surface.blit(arrow, (rect.right - 18, rect.centery - arrow.get_height() // 2))
+
+        if not self.algo_dropdown_open:
+            return
+
+        for idx, algo in enumerate(self.algo_options):
+            option_rect = self._algo_option_rect(idx)
+            hovered = option_rect.collidepoint(pygame.mouse.get_pos())
+            option_fill = (54, 58, 82) if hovered else (42, 45, 64)
+            pygame.draw.rect(surface, option_fill, option_rect, border_radius=8)
+            pygame.draw.rect(surface, (88, 95, 132), option_rect, 1, border_radius=8)
+            opt = self._fonts["mono"].render(algo, True, (224, 228, 242))
+            surface.blit(opt, (option_rect.left + 10, option_rect.centery - opt.get_height() // 2))
+
     def _draw_status(self, surface):
         status_rect = self.rects["status"]
 
@@ -778,6 +826,7 @@ class CubeVisualizer:
         self._draw_speed_slider(panel)
         self._draw_manual_grid(panel)
         self._draw_status(panel)
+        self._draw_algo_dropdown(panel)
 
         self.screen.blit(panel, self.panel_rect.topleft)
         pygame.draw.rect(self.screen, (88, 95, 132), self.panel_rect, 1)
