@@ -34,7 +34,7 @@ clean	:
 		$(RM) $(OBJS_DIR)
 
 fclean	:
-		$(RM) $(OBJS_DIR) $(NAME)
+		$(RM) $(OBJS_DIR) $(NAME) test
 
 re		:
 		$(RM) $(OBJS_DIR) $(NAME)
@@ -44,17 +44,10 @@ run		:
 		$(MAKE) re
 		./$(NAME)
 
-test_move	:
-		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test_move \
-			srcs/main_move_engine_test.cpp srcs/move.cpp
-
-test_prune	:
-		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test_prune \
-			srcs/main_prune_test.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp
-
-test_phase1	:
-		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test_phase1 \
-			srcs/main_phase1_test.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/phase_solver.cpp
+test		:
+		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test \
+			srcs/main_phase_test.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/phase_solver.cpp srcs/heuristics.cpp
+		./test
 
 v		:
 		$(MAKE) visualizer
@@ -64,4 +57,4 @@ visualizer	:
 
 -include $(DEPS)
 
-.PHONY: all clean fclean bonus re run visualizer v test_move test_prune test_phase1
+.PHONY: all clean fclean bonus re run visualizer v test

@@ -1,7 +1,7 @@
 #include "thistlethwaite.hpp"
 
 Thistlethwaite::Thistlethwaite(std::vector<std::string> scramble_sequence) :
-                _scramble_sequence(scramble_sequence), _eo_prune(2048, -1), _co_prune(2187, -1), _current_cube{}, _solved_cube{} {
+                _scramble_sequence(scramble_sequence), _eo_prune(2048, -1), _co_prune(2187, -1), _uds_prune(495, -1), _current_cube{}, _solved_cube{} {
     for (int i = 0; i < 8; ++i) {
         _current_cube.corner_perm[i] = static_cast<uint8_t>(i);
         _current_cube.corner_ori[i] = 0;
@@ -14,17 +14,33 @@ Thistlethwaite::Thistlethwaite(std::vector<std::string> scramble_sequence) :
         _solved_cube.edge_perm[i] = static_cast<uint8_t>(i);
         _solved_cube.edge_ori[i] = 0;
     }
+    static const Move phase_1_moves[] = {U, U2, U_PRIME,
+                                        D, D2, D_PRIME,
+                                        L, L2, L_PRIME,
+                                        R, R2, R_PRIME,
+                                        F, F2, F_PRIME,
+                                        B, B2, B_PRIME};
+    static const Move phase_2_moves[] = {U, U2, U_PRIME,
+                                        D, D2, D_PRIME,
+                                        L2, R2, F2, B2};
+
+    _phase_rules[0] = {
+        .moves = phase_1_moves,
+        .move_count = 18,
+        .is_goal = [this](const Cubie& c) { return is_phase_1_solved(c); },
+        .heuristic = [this](const Cubie& c) { return heuristic_phase_1(c); }
+    };
+    _phase_rules[1] = {
+        .moves = phase_2_moves,
+        .move_count = 10,
+        .is_goal = [this](const Cubie& c) { return is_phase_2_solved(c); },
+        .heuristic = [this](const Cubie& c) { return heuristic_phase_2(c); }
+    };
+
     init_eo_prune();
     init_co_prune();
+    init_uds_prune();
     scramble();
-
-    static const Move phase_1_moves[] = {U, U2, U_PRIME, D, D2, D_PRIME, L, L2, L_PRIME, R, R2, R_PRIME, F, F2, F_PRIME, B, B2, B_PRIME};
-    _phase_1_rules = {
-        .moves = phase_1_moves,
-        .move_count = NUM_FACE_MOVES,
-        .is_goal = [this](const Cubie& c) { return is_phase_1_solved(c); },
-        .heuristic = [this](const Cubie& c) { return _eo_prune[encodeEO(c)]; }
-    };
 }
 
 Thistlethwaite::~Thistlethwaite() {
@@ -108,5 +124,8 @@ std::string Thistlethwaite::move_to_string(Move move) {
 }
 
 bool Thistlethwaite::solve(Cubie& cube) {
-    return solve_phase(cube, _phase_1_rules);
+    if (!solve_phase(cube, _phase_rules[0]))
+        return false;
+    // return solve_phase(cube, _phase_rules[1]);
+    return true;
 }

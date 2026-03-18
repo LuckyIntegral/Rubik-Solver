@@ -4,6 +4,7 @@ venv
 __pycache__
 test_move
 test_prune
+test
 
 # Prerequisites
 *.d
