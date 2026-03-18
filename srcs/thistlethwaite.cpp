@@ -75,11 +75,30 @@ void Thistlethwaite::scramble() {
     }
 }
 
-bool Thistlethwaite::is_phase_1_solved(const Cubie& cube) {
-    for (int i = 0; i < 12; ++i) {
-        if (cube.edge_ori[i] != 0) {
-            return false;
-        }
+std::string Thistlethwaite::move_to_string(Move move) {
+    switch (move) {
+        case U: return "U";
+        case U2: return "U2";
+        case U_PRIME: return "U'";
+        case D: return "D";
+        case D2: return "D2";
+        case D_PRIME: return "D'";
+        case L: return "L";
+        case L2: return "L2";
+        case L_PRIME: return "L'";
+        case R: return "R";
+        case R2: return "R2";
+        case R_PRIME: return "R'";
+        case F: return "F";
+        case F2: return "F2";
+        case F_PRIME: return "F'";
+        case B: return "B";
+        case B2: return "B2";
+        case B_PRIME: return "B'";
+        default: return "?";
     }
-    return true;
+}
+
+bool Thistlethwaite::solve(Cubie& cube) {
+    return solve_phase_1(cube);
 }
