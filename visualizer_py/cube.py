@@ -10,10 +10,10 @@ except ImportError:
 
 
 class Cube:
-    """Represents the state of a Rubik's cube in 3D space."""
+    """ Represents the state of a Rubik's cube in 3D space """
 
     def __init__(self):
-        """Initialize cube with 27 unit cubes (including center core)."""
+        """ Initialize cube with 27 unit cubes (including center core) """
         self.cubes = []
         self.spacing = 1.05
 
@@ -69,12 +69,7 @@ class Cube:
         ]
 
     def _get_sticker_faces(self, x: int, y: int, z: int) -> dict:
-        """Determine which faces have stickers for a cubie at position (x, y, z).
-
-        Returns:
-            Dict mapping face keys ('U', 'D', 'F', 'B', 'L', 'R') to their colors.
-            Center core has no stickers.
-        """
+        """ Determine which faces have stickers for a cubie at position (x, y, z) """
         faces = {}
         if x == 1:
             faces['R'] = 'R'
@@ -94,15 +89,7 @@ class Cube:
         return faces
 
     def get_cubes_in_layer(self, axis: str, layer: int) -> list:
-        """Get all cubies in a specific layer.
-
-        Args:
-            axis: 'x', 'y', or 'z'
-            layer: -1, 0, or 1
-
-        Returns:
-            List of cubie dictionaries
-        """
+        """ Get all cubies in a specific layer """
         result = []
         for cube in self.cubes:
             x, y, z = cube['pos']
@@ -115,13 +102,7 @@ class Cube:
         return result
 
     def rotate_cubes_in_layer(self, axis: str, layer: int, angle: float):
-        """Rotate cubies in a layer around an axis.
-
-        Args:
-            axis: 'x', 'y', or 'z'
-            layer: -1, 0, or 1
-            angle: Rotation angle in radians
-        """
+        """ Rotate cubies in a layer around an axis """
         cubes_to_rotate = self.get_cubes_in_layer(axis, layer)
         layer_rot = self._rotation_matrix_axis(axis, angle)
 
@@ -156,7 +137,7 @@ class Cube:
             cube['pos'] = (self._snap_coord(x), self._snap_coord(y), self._snap_coord(z))
 
     def _snap_coord(self, v: float) -> int:
-        """Snap a coordinate to nearest integer (-1, 0, or 1)."""
+        """ Snap a coordinate to nearest integer (-1, 0, or 1) """
         n = round(v)
         if n > 1:
             return 1
@@ -165,11 +146,7 @@ class Cube:
         return n
 
     def apply_move(self, move: str):
-        """Apply a move to the cube (without animation).
-
-        Args:
-            move: Valid move string (e.g., 'R', "U'", 'F2')
-        """
+        """ Apply a move to the cube (without animation) """
         params = get_move_params(move)
 
         # 90 degrees per quarter turn
@@ -183,13 +160,13 @@ class Cube:
             )
 
     def reset(self):
-        """Reset cube to solved state."""
+        """ Reset cube to solved state """
         for cube in self.cubes:
             cube['pos'] = cube['home_pos']
             cube['rotation'] = self._identity_matrix()
 
     def copy(self):
-        """Return a deep copy of the cube state."""
+        """ Return a deep copy of the cube state """
         return copy.deepcopy(self)
 
 # Import after class definition to avoid circular imports

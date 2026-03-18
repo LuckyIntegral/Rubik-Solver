@@ -4,22 +4,14 @@ import math
 import numpy as np
 import pygame
 
-try:
-    from .moves import FACE_COLORS
-except ImportError:
-    from moves import FACE_COLORS
+from moves import FACE_COLORS
 
 
 class CubeRenderer:
-    """Simple cube renderer for visualization reference."""
+    """ Simple cube renderer for visualization reference """
 
     def __init__(self, width: int = 1200, height: int = 900):
-        """Initialize the renderer.
-
-        Args:
-            width: Display width
-            height: Display height
-        """
+        """ Initialize the renderer """
         self.width = width
         self.height = height
         self.aspect = width / height if height > 0 else 1.0
@@ -56,13 +48,7 @@ class CubeRenderer:
         ]
 
     def render(self, surface, cube_state, animation=None):
-        """Render the cube onto a pygame surface.
-
-        Args:
-            surface: Target pygame surface (canvas area)
-            cube_state: Cube instance containing cubie positions and rotations
-            animation: Optional dict with {axis, layer, angle}
-        """
+        """ Render the cube onto a pygame surface """
         if surface is None or cube_state is None:
             return
 
@@ -240,23 +226,13 @@ class CubeRenderer:
         ])
 
     def resize(self, width: int, height: int):
-        """Handle window resize.
-
-        Args:
-            width: New window width
-            height: New window height
-        """
+        """ Handle window resize """
         self.width = width
         self.height = height
         self.aspect = width / height if height > 0 else 1.0
 
     def rotate_camera(self, angle_x: float, angle_y: float):
-        """Rotate camera around the cube.
-
-        Args:
-            angle_x: Rotation around x-axis
-            angle_y: Rotation around y-axis
-        """
+        """ Rotate camera around the cube """
         # Convert to spherical and apply rotation
         rel = np.array(self.camera_pos) - np.array(self.camera_target)
         distance = np.linalg.norm(rel)
@@ -276,11 +252,7 @@ class CubeRenderer:
             ]).tolist()
 
     def zoom_camera(self, delta: float):
-        """Zoom camera in/out.
-
-        Args:
-            delta: Change in distance (positive = zoom out)
-        """
+        """ Zoom camera in/out """
         rel = np.array(self.camera_pos) - np.array(self.camera_target)
         distance = np.linalg.norm(rel)
 

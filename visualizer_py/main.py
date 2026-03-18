@@ -5,14 +5,9 @@ from typing import Callable, Dict, List, Optional, Tuple, TypedDict
 
 import pygame
 
-try:
-    from .cube import Cube
-    from .moves import invert_move, parse_moves
-    from .scene import CubeRenderer
-except ImportError:
-    from cube import Cube
-    from moves import invert_move, parse_moves
-    from scene import CubeRenderer
+from cube import Cube
+from moves import invert_move, parse_moves
+from scene import CubeRenderer
 
 
 class AnimationState(TypedDict):
