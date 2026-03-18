@@ -9,9 +9,10 @@ class Thistlethwaite {
         std::vector<std::string>    _path;
         std::vector<int>            _eo_prune;
         std::vector<int>            _co_prune;
+        std::vector<int>            _uds_prune;
         Cubie                       _current_cube;
         Cubie                       _solved_cube;
-        PhaseRules                  _phase_1_rules;
+        PhaseRules                  _phase_rules[2];
 
 
 
@@ -20,12 +21,19 @@ class Thistlethwaite {
         void    scramble();
         std::string move_to_string(Move move);
 
-        int     encodeEO(const Cubie& cube);
-        int     encodeCO(const Cubie& cube);
+        int     encodeEO(const Cubie& cube) const;
+        int     encodeCO(const Cubie& cube) const;
+        int     encodeUDSlice(const Cubie& cube) const;
         void    init_eo_prune();
         void    init_co_prune();
+        void    init_uds_prune();
+
+        int     heuristic_phase_1(const Cubie& cube);
+        int     heuristic_phase_2(const Cubie& cube);
 
         bool    is_phase_1_solved(const Cubie& cube) const;
+        bool    is_phase_2_solved(const Cubie& cube) const;
+    
         bool    dfs(const Cubie& cube, const PhaseRules& rules, int depth, int limit, std::vector<std::string>& path, Move last_move);
         bool    solve_phase(const Cubie& cube, const PhaseRules& rules);
 
@@ -38,6 +46,7 @@ class Thistlethwaite {
 
     // testing functions
     bool    is_phase_1_complete(const Cubie& cube) const;
+    bool    is_phase_2_complete(const Cubie& cube) const;
     bool    is_pruned();
 };
 

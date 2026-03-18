@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <vector>
 #include <string>
+#include <iostream>
 
 enum Move {
     U, U2, U_PRIME,
