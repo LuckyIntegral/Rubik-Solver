@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <stdexcept>
 #include <vector>
 #include <string>
@@ -14,7 +15,8 @@ enum Move {
     R, R2, R_PRIME,
     F, F2, F_PRIME,
     B, B2, B_PRIME,
-    NOMOVE
+    NOMOVE,
+    NUM_FACE_MOVES = 18
 };
 
 enum Corner
@@ -50,6 +52,13 @@ struct Cubie {
     uint8_t corner_ori[8];
     uint8_t edge_perm[12];
     uint8_t edge_ori[12];
+};
+
+struct PhaseRules {
+    const Move* moves;
+    int move_count;
+    std::function<bool(const Cubie&)> is_goal;
+    std::function<int(const Cubie&)> heuristic;
 };
 
 void apply_move(Cubie& cube, Move move);

@@ -11,6 +11,7 @@ class Thistlethwaite {
         std::vector<int>            _co_prune;
         Cubie                       _current_cube;
         Cubie                       _solved_cube;
+        PhaseRules                  _phase_1_rules;
 
 
 
@@ -25,17 +26,19 @@ class Thistlethwaite {
         void    init_co_prune();
 
         bool    is_phase_1_solved(const Cubie& cube) const;
-        bool    dfs_phase_1(const Cubie& cube, int depth, int limit, std::vector<std::string>& path, Move last_move);
-        bool    solve_phase_1(const Cubie& cube);
+        bool    dfs(const Cubie& cube, const PhaseRules& rules, int depth, int limit, std::vector<std::string>& path, Move last_move);
+        bool    solve_phase(const Cubie& cube, const PhaseRules& rules);
 
     public:
-        bool    is_phase_1_complete(const Cubie& cube) const;
-        bool    is_pruned();
-        Thistlethwaite(std::vector<std::string> scramble_sequence);
-        ~Thistlethwaite();
+    Thistlethwaite(std::vector<std::string> scramble_sequence);
+    ~Thistlethwaite();
+    
+    bool    solve(Cubie& cube);
+    size_t  get_solution_length() const;
 
-        bool    solve(Cubie& cube);
-        size_t  get_solution_length() const;
+    // testing functions
+    bool    is_phase_1_complete(const Cubie& cube) const;
+    bool    is_pruned();
 };
 
 #endif
