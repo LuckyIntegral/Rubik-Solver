@@ -12,10 +12,7 @@ export function init() {
     status: $('status'),
     pos: $('pos'),
     pillMoveB: $('pillMove').querySelector('b'),
-    prev: $('prevMove'),
-    cur: $('curMove'),
-    next: $('nextMove'),
-    seqStrip: $('seqStrip'),
+    barrelInner: $('moveBarrelInner'),
     speed: /** @type {HTMLInputElement} */ ($('speed')),
     speedLabel: $('speedLabel'),
     manualGrid: $('manualGrid'),
@@ -51,12 +48,41 @@ export function init() {
 
   function updateHUD() {
     el.pos.textContent = `${state.seqIndex} / ${state.sequence.length}`;
-    const prev = state.seqIndex >= 2 ? state.sequence[state.seqIndex - 2] : (state.seqIndex === 1 ? state.sequence[0] : null);
-    const cur = state.applied.length ? state.applied[state.applied.length - 1] : null;
-    const next = state.seqIndex < state.sequence.length ? state.sequence[state.seqIndex] : null;
-    el.prev.textContent = prev || '—';
-    el.cur.textContent = cur || '—';
-    el.next.textContent = next || '—';
+    updateMoveBarrel();
+  }
+
+  function updateMoveBarrel() {
+    if (!el.barrelInner) return;
+    const center = state.seqIndex; // "next" move sits in the middle
+    const depth = 5;
+    const pieces = [];
+    for (let i = -depth; i <= depth; i++) {
+      const idx = center + i;
+      const text = idx >= 0 && idx < state.sequence.length ? state.sequence[idx] : '—';
+      pieces.push({ i, idx, text });
+    }
+
+    // Build once per update (small: 11 nodes). Super simple + deterministic.
+    el.barrelInner.innerHTML = '';
+    const frag = document.createDocumentFragment();
+
+    for (const p of pieces) {
+      const d = Math.abs(p.i);
+      const opacity = Math.max(0, 1 - d * 0.16);
+      const rot = p.i * 12;  // degrees
+      const y = p.i * 30;    // px
+      const z = 62 - d * 16; // px (fake curvature)
+
+      const item = document.createElement('div');
+      item.textContent = p.text;
+      item.className = 'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-mono text-bg tracking-wide';
+      item.style.transform = `translateX(${y}px) translateZ(${z}px) rotateY(${rot}deg)`;
+      item.style.opacity = String(opacity);
+      if (p.idx === state.seqIndex) item.classList.add('border-b');
+      frag.appendChild(item);
+    }
+
+    el.barrelInner.appendChild(frag);
   }
 
   function updateButtons() {
@@ -79,28 +105,6 @@ export function init() {
   el.speed.addEventListener('input', setSpeedLabel);
   setSpeedLabel();
 
-  function renderSeqStrip() {
-    el.seqStrip.innerHTML = '';
-    const frag = document.createDocumentFragment();
-    state.sequence.forEach((m, idx) => {
-      const chip = document.createElement('span');
-      chip.dataset.idx = String(idx);
-      chip.textContent = m;
-      chip.className = 'shrink-0 select-none whitespace-nowrap rounded-full border border-white/10 bg-white/5 px-2 py-1.5 font-mono text-xs text-gray-100';
-      frag.appendChild(chip);
-    });
-    el.seqStrip.appendChild(frag);
-  }
-
-  function highlightSeqStrip() {
-    for (const chip of el.seqStrip.children) {
-      const idx = Number(chip.dataset.idx);
-      chip.style.opacity = idx < state.seqIndex ? '0.45' : '1';
-      chip.style.outline = idx === state.seqIndex ? '2px solid rgba(125,211,252,.65)' : 'none';
-      chip.style.outlineOffset = '2px';
-    }
-  }
-
   // Serialize all cube mutations so animations never overlap.
   let queue = Promise.resolve();
   function withBusy(fn) {
@@ -112,7 +116,6 @@ export function init() {
         state.busy = false;
         setPill('');
         updateHUD();
-        highlightSeqStrip();
         updateButtons();
       }
     });
@@ -142,7 +145,6 @@ export function init() {
     await applyOne(m);
     state.seqIndex++;
     updateHUD();
-    highlightSeqStrip();
     updateButtons();
   }
 
@@ -155,7 +157,6 @@ export function init() {
     state.applied.pop();
     if (state.seqIndex > 0 && state.sequence[state.seqIndex - 1] === last) state.seqIndex--;
     updateHUD();
-    highlightSeqStrip();
     updateButtons();
   }
 
@@ -194,9 +195,7 @@ export function init() {
       state.applied = [];
       setError('');
       setStatus(`Loaded: ${state.scrambleMoves.length} + ${state.solveMoves.length}`);
-      renderSeqStrip();
       updateHUD();
-      highlightSeqStrip();
       updateButtons();
     } catch (e) {
       setError(String(e?.message || e));
@@ -211,7 +210,6 @@ export function init() {
     setError('');
     setStatus('Reset to solved');
     updateHUD();
-    highlightSeqStrip();
     updateButtons();
   }
 
@@ -246,7 +244,6 @@ export function init() {
     const solveStart = state.scrambleMoves.length;
     state.seqIndex = Math.max(state.seqIndex, solveStart);
     updateHUD();
-    highlightSeqStrip();
     await runMoves(state.solveMoves, solveStart);
   });
 
