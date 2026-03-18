@@ -1,3 +1,4 @@
+#include <chrono>
 #include <iostream>
 #include <vector>
 
@@ -39,7 +40,11 @@ static TestResult test_construct_destruct() {
 
 static TestResult test_is_pruned_all_states_reached() {
     std::vector<std::string> empty;
+    auto start = std::chrono::steady_clock::now();
     Thistlethwaite t(empty);
+    auto end = std::chrono::steady_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    std::cout << "  " << COLOR_YELLOW << "Pruning took " << ms << " ms" << COLOR_RESET << "\n";
     bool ok = t.is_pruned();
     return {"2. is_pruned() - all EO (2048) and CO (2187) states reached", ok};
 }
