@@ -4,6 +4,8 @@
 #include <array>
 #include <cstdint>
 #include <stdexcept>
+#include <vector>
+#include <string>
 
 enum Move {
     U, U2, U_PRIME,

@@ -11,7 +11,7 @@ INCLUDES	= -I incs/
 NAME		= rubik
 
 SRCS_DIR	= srcs
-SRCS		= $(wildcard $(SRCS_DIR)/*.cpp)
+SRCS		= $(filter-out $(SRCS_DIR)/main_%_test.cpp,$(wildcard $(SRCS_DIR)/*.cpp))
 
 OBJS_DIR	= objs
 OBJS		= $(addprefix $(OBJS_DIR)/, $(SRCS:${SRCS_DIR}/%.cpp=%.o))
@@ -48,6 +48,10 @@ test_move	:
 		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test_move \
 			srcs/main_move_engine_test.cpp srcs/move.cpp
 
+test_prune	:
+		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test_prune \
+			srcs/main_prune_test.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp
+
 v		:
 		$(MAKE) visualizer
 
@@ -56,4 +60,4 @@ visualizer	:
 
 -include $(DEPS)
 
-.PHONY: all clean fclean bonus re run visualizer v
+.PHONY: all clean fclean bonus re run visualizer v test_move test_prune

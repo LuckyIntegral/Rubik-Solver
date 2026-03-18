@@ -2,6 +2,8 @@
 rubik
 venv
 __pycache__
+test_move
+test_prune
 
 # Prerequisites
 *.d

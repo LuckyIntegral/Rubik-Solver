@@ -1,4 +1,5 @@
 #include "cubie.h"
+#include "thistlethwaite.hpp"
 
 // Convension: a -> b -> c -> d -> a
 static void cycle4(uint8_t array[], uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
@@ -96,7 +97,7 @@ static void    move_B(Cubie& cube, int turns = 1) {
     }
 }
 
-void apply_move(Cubie& cube, Move move) {
+static void do_apply_move(Cubie& cube, Move move) {
     switch (move) {
         case U:         move_U(cube, 1); break;
         case U2:        move_U(cube, 2); break;
@@ -127,8 +128,20 @@ void apply_move(Cubie& cube, Move move) {
     }
 }
 
+void apply_move(Cubie& cube, Move move) {
+    do_apply_move(cube, move);
+}
+
 Cubie after_move(Cubie const& cube, Move move) {
     Cubie result = cube;
-    apply_move(result, move);
+    do_apply_move(result, move);
     return result;
+}
+
+void Thistlethwaite::apply_move(Cubie& cube, Move move) {
+    do_apply_move(cube, move);
+}
+
+Cubie Thistlethwaite::after_move(Cubie const& cube, Move move) {
+    return ::after_move(cube, move);
 }
