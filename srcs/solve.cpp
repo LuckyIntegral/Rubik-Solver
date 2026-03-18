@@ -4,7 +4,6 @@
 
 #include "rubik.hpp"
 
-// Testing only, not a real solution
 const std::map<std::string, std::string> OPPOSITES = {
     {"R", "R'"},  {"R'", "R"},  {"L", "L'"},  {"L'", "L"},  {"U", "U'"},
     {"U'", "U"},  {"D", "D'"},  {"D'", "D"},  {"F", "F'"},  {"F'", "F"},
