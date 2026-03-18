@@ -127,11 +127,11 @@ class CubeVisualizer:
 
         self.rects["scramble_only"] = pygame.Rect(margin, y, half_w, btn_h)
         self.rects["solve_only"] = pygame.Rect(margin + half_w + margin, y, half_w, btn_h)
-        y += btn_h + 16
+        y += btn_h + 22
 
-        self.rects["speed_track"] = pygame.Rect(margin, y + 16, self.panel_width - margin * 2 - 90, 8)
-        self.rects["speed_label"] = pygame.Rect(self.rects["speed_track"].right + 8, y + 6, 82, 20)
-        y += 40
+        self.rects["speed_track"] = pygame.Rect(margin, y + 18, self.panel_width - margin * 2 - 90, 10)
+        self.rects["speed_label"] = pygame.Rect(self.rects["speed_track"].right + 10, y + 7, 82, 22)
+        y += 50
 
         self.manual_buttons = []
         cols = 6
