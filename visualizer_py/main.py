@@ -126,7 +126,7 @@ class CubeVisualizer:
 
         self.rects["speed_track"] = pygame.Rect(margin, y + 18, self.panel_width - margin * 2 - 90, 10)
         self.rects["speed_label"] = pygame.Rect(self.rects["speed_track"].right + 10, y + 7, 82, 22)
-        y += 50
+        y += 60
 
         self.manual_buttons = []
         cols = 6
