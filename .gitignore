@@ -1,6 +1,7 @@
 /objs
 rubik
 venv
+__pycache__
 
 # Prerequisites
 *.d
