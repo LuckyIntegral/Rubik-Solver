@@ -546,13 +546,6 @@ class CubeVisualizer:
     def _draw_status(self, surface):
         status_rect = self.rects["status"]
 
-        keys_help = "Keys: Space play/pause, Left/Right step, Backspace undo"
-        moves_help = "Moves: R L U D F B with ' and 2"
-        h1 = self._fonts["mono_small"].render(keys_help, True, (162, 168, 191))
-        h2 = self._fonts["mono_small"].render(moves_help, True, (162, 168, 191))
-        surface.blit(h1, (status_rect.left, status_rect.top))
-        surface.blit(h2, (status_rect.left, status_rect.top + 18))
-
         pos = self._fonts["mono"].render(f"{self.seq_index} / {len(self.sequence)}", True, (216, 224, 243))
         surface.blit(pos, (status_rect.right - pos.get_width(), status_rect.top))
 
