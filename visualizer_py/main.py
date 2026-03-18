@@ -1,6 +1,11 @@
 """Main Rubik's Cube visualizer application using pygame."""
 
 import math
+import os
+import random
+import subprocess
+import time
+from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple, TypedDict
 
 import pygame
@@ -50,6 +55,9 @@ class CubeVisualizer:
 
         self.error_text = ""
         self.status_text = "Ready"
+        self.last_exec_time_ms: Optional[float] = None
+        self.last_exec_input = ""
+        self.scramble_len_text = "20"
 
         self.sequence: List[str] = []
         self.scramble_moves: List[str] = []
@@ -103,6 +111,9 @@ class CubeVisualizer:
         y += input_h + gap + 26
         self.rects["solve_input"] = pygame.Rect(margin, y, self.panel_width - margin * 2, input_h)
         y += input_h + gap + 10
+        self.rects["scramble_len_input"] = pygame.Rect(margin, y, 116, btn_h)
+        self.rects["generate_scramble"] = pygame.Rect(margin + 116 + gap, y, self.panel_width - margin * 2 - 116 - gap, btn_h)
+        y += btn_h + gap
 
         half_w = (self.panel_width - margin * 3) // 2
         self.rects["load"] = pygame.Rect(margin, y, half_w, btn_h)
@@ -122,6 +133,9 @@ class CubeVisualizer:
 
         self.rects["scramble_only"] = pygame.Rect(margin, y, half_w, btn_h)
         self.rects["solve_only"] = pygame.Rect(margin + half_w + margin, y, half_w, btn_h)
+        y += btn_h + gap
+
+        self.rects["run_solver"] = pygame.Rect(margin, y, self.panel_width - margin * 2, btn_h)
         y += btn_h + 22
 
         self.rects["speed_track"] = pygame.Rect(margin, y + 18, self.panel_width - margin * 2 - 90, 10)
@@ -242,7 +256,12 @@ class CubeVisualizer:
         if key is None:
             return
 
-        text = self.scramble_text if key == "scramble" else self.solve_text
+        if key == "scramble":
+            text = self.scramble_text
+        elif key == "solve":
+            text = self.solve_text
+        else:
+            text = self.scramble_len_text
 
         if event.key == pygame.K_RETURN:
             self.active_input = None
@@ -253,12 +272,18 @@ class CubeVisualizer:
         if event.key == pygame.K_BACKSPACE:
             text = text[:-1]
         elif event.unicode and event.unicode.isprintable() and event.unicode not in "\r\n\t":
-            text += event.unicode
+            if key == "scramble_len":
+                if event.unicode.isdigit() and len(text) < 3:
+                    text += event.unicode
+            else:
+                text += event.unicode
 
         if key == "scramble":
             self.scramble_text = text
-        else:
+        elif key == "solve":
             self.solve_text = text
+        else:
+            self.scramble_len_text = text
 
     def _set_speed_from_mouse(self, mouse_x: int):
         track = self.rects["speed_track"]
@@ -277,6 +302,15 @@ class CubeVisualizer:
             return
         if self.rects["solve_input"].collidepoint(pos):
             self.active_input = "solve"
+            return
+        if self.rects["scramble_len_input"].collidepoint(pos):
+            self.active_input = "scramble_len"
+            return
+
+        if self.rects["generate_scramble"].collidepoint(pos):
+            self.pause_all()
+            if self._can_interact():
+                self._generate_scramble_from_length()
             return
 
         if self.rects["load"].collidepoint(pos):
@@ -327,6 +361,12 @@ class CubeVisualizer:
                 self.status_text = "Running solve"
             return
 
+        if self.rects["run_solver"].collidepoint(pos):
+            self.pause_all()
+            if self._can_interact():
+                self._run_solver_executable()
+            return
+
         if not self._can_interact():
             return
 
@@ -339,6 +379,82 @@ class CubeVisualizer:
     def pause_all(self):
         self.playing = False
         self.batch_queue = []
+
+    def _generate_scramble_from_length(self):
+        raw_len = self.scramble_len_text.strip() or "0"
+        if not raw_len.isdigit():
+            self.error_text = "Scramble length must be a positive integer"
+            self.status_text = "Invalid scramble length"
+            return
+
+        length = int(raw_len)
+        if length <= 0:
+            self.error_text = "Scramble length must be greater than zero"
+            self.status_text = "Invalid scramble length"
+            return
+
+        faces = ["R", "L", "U", "D", "F", "B"]
+        suffixes = ["", "'", "2"]
+        moves: List[str] = []
+        prev_face = ""
+
+        for _ in range(length):
+            candidates = [face for face in faces if face != prev_face]
+            face = random.choice(candidates)
+            move = face + random.choice(suffixes)
+            moves.append(move)
+            prev_face = face
+
+        self.scramble_text = " ".join(moves)
+        self.solve_text = ""
+        self.error_text = ""
+        self.last_exec_input = self.scramble_text
+
+        self.load_sequence(reset_cube=True)
+        self.status_text = f"Generated scramble ({length} moves)"
+
+    def _run_solver_executable(self):
+        move_text = self.scramble_text.strip()
+        self.error_text = ""
+
+        try:
+            parse_moves(move_text)
+        except ValueError as exc:
+            self.error_text = str(exc)
+            self.status_text = "Invalid scramble sequence"
+            return
+
+        solver_path = Path(__file__).resolve().parent.parent / "rubik"
+        if not solver_path.exists():
+            self.status_text = "Solver executable not found"
+            self.error_text = f"Missing: {solver_path}"
+            return
+        if not os.access(solver_path, os.X_OK):
+            self.status_text = "Solver is not executable"
+            self.error_text = f"Run: chmod +x {solver_path}"
+            return
+
+        start = time.perf_counter()
+        result = subprocess.run(
+            [str(solver_path), move_text],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        elapsed_ms = (time.perf_counter() - start) * 1000.0
+        self.last_exec_time_ms = elapsed_ms
+        self.last_exec_input = move_text
+
+        if result.returncode != 0:
+            err = (result.stderr or result.stdout or "Solver failed").strip()
+            self.error_text = err[:160]
+            self.status_text = f"Solver failed ({elapsed_ms:.2f} ms)"
+            return
+
+        solved_moves = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+        self.solve_text = " ".join(solved_moves)
+        self.load_sequence(reset_cube=True)
+        self.status_text = f"Solver finished in {elapsed_ms:.2f} ms"
 
     def load_sequence(self, reset_cube: bool) -> bool:
         self.error_text = ""
@@ -549,13 +665,28 @@ class CubeVisualizer:
         pos = self._fonts["mono"].render(f"{self.seq_index} / {len(self.sequence)}", True, (216, 224, 243))
         surface.blit(pos, (status_rect.right - pos.get_width(), status_rect.top))
 
+        if self.last_exec_time_ms is not None:
+            elapsed = self._fonts["mono_small"].render(
+                f"solver: {self.last_exec_time_ms:.2f} ms",
+                True,
+                (176, 212, 236),
+            )
+            surface.blit(elapsed, (status_rect.left, status_rect.top + 18))
+
+            moves = self._fonts["mono_small"].render(
+                f"moves: {len(self.solve_moves)}",
+                True,
+                (176, 212, 236),
+            )
+            surface.blit(moves, (status_rect.left, status_rect.top + 34))
+
         status_line = self.status_text or "Ready"
         status_surf = self._fonts["mono"].render(status_line, True, (150, 220, 170))
-        surface.blit(status_surf, (status_rect.left, status_rect.top + 42))
+        surface.blit(status_surf, (status_rect.left, status_rect.top + 56))
 
         if self.error_text:
             err = self._fonts["mono"].render(self.error_text[:80], True, (238, 122, 122))
-            surface.blit(err, (status_rect.left, status_rect.top + 64))
+            surface.blit(err, (status_rect.left, status_rect.top + 78))
 
     def _draw_move_barrel(self):
         if self.canvas_rect.width <= 0 or self.canvas_rect.height <= 0:
@@ -608,6 +739,13 @@ class CubeVisualizer:
 
         self._draw_input(panel, "Scramble algorithm", "scramble", self.rects["scramble_input"], self.scramble_text)
         self._draw_input(panel, "Solve algorithm", "solve", self.rects["solve_input"], self.solve_text)
+        self._draw_input(panel, "N", "scramble_len", self.rects["scramble_len_input"], self.scramble_len_text)
+        self._draw_button(
+            panel,
+            self.rects["generate_scramble"],
+            "Generate scramble",
+            enabled=not self.busy,
+        )
 
         self._draw_button(panel, self.rects["load"], "Load sequence", enabled=not self.busy)
         self._draw_button(panel, self.rects["reset_cube"], "Reset cube", enabled=not self.busy)
@@ -628,6 +766,13 @@ class CubeVisualizer:
             self.rects["solve_only"],
             "Solve only",
             enabled=(not self.busy and bool(self.solve_moves)),
+        )
+        self._draw_button(
+            panel,
+            self.rects["run_solver"],
+            "Run ./rubik",
+            enabled=(not self.busy and bool(self.scramble_text.strip())),
+            accent=True,
         )
 
         self._draw_speed_slider(panel)
