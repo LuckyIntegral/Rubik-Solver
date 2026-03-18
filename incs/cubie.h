@@ -13,7 +13,8 @@ enum Move {
     L, L2, L_PRIME,
     R, R2, R_PRIME,
     F, F2, F_PRIME,
-    B, B2, B_PRIME
+    B, B2, B_PRIME,
+    NOMOVE
 };
 
 enum Corner

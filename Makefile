@@ -52,6 +52,10 @@ test_prune	:
 		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test_prune \
 			srcs/main_prune_test.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp
 
+test_phase1	:
+		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test_phase1 \
+			srcs/main_phase1_test.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/phase_solver.cpp
+
 v		:
 		$(MAKE) visualizer
 
@@ -60,4 +64,4 @@ visualizer	:
 
 -include $(DEPS)
 
-.PHONY: all clean fclean bonus re run visualizer v test_move test_prune
+.PHONY: all clean fclean bonus re run visualizer v test_move test_prune test_phase1
