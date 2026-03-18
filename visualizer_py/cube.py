@@ -1,6 +1,7 @@
 """Rubik's cube state management."""
 
 import copy
+import math
 
 try:
     from .moves import get_move_params
@@ -23,10 +24,49 @@ class Cube:
                     cube_data = {
                         'home_pos': (x, y, z),
                         'pos': (x, y, z),
-                        'rotation': [0, 0, 0],  # Euler angles in radians
+                        # 3x3 orientation matrix in world space.
+                        'rotation': self._identity_matrix(),
                         'sticker_faces': self._get_sticker_faces(x, y, z),
                     }
                     self.cubes.append(cube_data)
+
+    def _identity_matrix(self) -> list:
+        return [
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
+        ]
+
+    def _rotation_matrix_axis(self, axis: str, angle: float) -> list:
+        c = math.cos(angle)
+        s = math.sin(angle)
+
+        if axis == 'x':
+            return [
+                [1.0, 0.0, 0.0],
+                [0.0, c, -s],
+                [0.0, s, c],
+            ]
+        if axis == 'y':
+            return [
+                [c, 0.0, s],
+                [0.0, 1.0, 0.0],
+                [-s, 0.0, c],
+            ]
+        return [
+            [c, -s, 0.0],
+            [s, c, 0.0],
+            [0.0, 0.0, 1.0],
+        ]
+
+    def _matmul3(self, a: list, b: list) -> list:
+        return [
+            [
+                a[r][0] * b[0][c] + a[r][1] * b[1][c] + a[r][2] * b[2][c]
+                for c in range(3)
+            ]
+            for r in range(3)
+        ]
 
     def _get_sticker_faces(self, x: int, y: int, z: int) -> dict:
         """Determine which faces have stickers for a cubie at position (x, y, z).
@@ -83,6 +123,7 @@ class Cube:
             angle: Rotation angle in radians
         """
         cubes_to_rotate = self.get_cubes_in_layer(axis, layer)
+        layer_rot = self._rotation_matrix_axis(axis, angle)
 
         for cube in cubes_to_rotate:
             # Update position via rotation
@@ -94,28 +135,25 @@ class Cube:
                 new_y = y * cos_a - z * sin_a
                 new_z = y * sin_a + z * cos_a
                 cube['pos'] = (x, new_y, new_z)
-                cube['rotation'][0] += angle
             elif axis == 'y':
                 # Rotate around y-axis
                 cos_a, sin_a = cos(angle), sin(angle)
                 new_x = x * cos_a + z * sin_a
                 new_z = -x * sin_a + z * cos_a
                 cube['pos'] = (new_x, y, new_z)
-                cube['rotation'][1] += angle
             elif axis == 'z':
                 # Rotate around z-axis
                 cos_a, sin_a = cos(angle), sin(angle)
                 new_x = x * cos_a - y * sin_a
                 new_y = x * sin_a + y * cos_a
                 cube['pos'] = (new_x, new_y, z)
-                cube['rotation'][2] += angle
+
+            # Compose orientation in world axes for stable multi-axis turns.
+            cube['rotation'] = self._matmul3(layer_rot, cube['rotation'])
 
             # Normalize position (snap to grid)
             x, y, z = cube['pos']
             cube['pos'] = (self._snap_coord(x), self._snap_coord(y), self._snap_coord(z))
-
-            # Normalize rotation
-            cube['rotation'] = [self._snap_angle(r) for r in cube['rotation']]
 
     def _snap_coord(self, v: float) -> int:
         """Snap a coordinate to nearest integer (-1, 0, or 1)."""
@@ -126,19 +164,12 @@ class Cube:
             return -1
         return n
 
-    def _snap_angle(self, angle: float) -> float:
-        """Snap an angle to nearest 90-degree increment."""
-        import math
-        quarter_pi = math.pi / 2
-        return round(angle / quarter_pi) * quarter_pi
-
     def apply_move(self, move: str):
         """Apply a move to the cube (without animation).
 
         Args:
             move: Valid move string (e.g., 'R', "U'", 'F2')
         """
-        import math
         params = get_move_params(move)
 
         # 90 degrees per quarter turn
@@ -155,12 +186,11 @@ class Cube:
         """Reset cube to solved state."""
         for cube in self.cubes:
             cube['pos'] = cube['home_pos']
-            cube['rotation'] = [0, 0, 0]
+            cube['rotation'] = self._identity_matrix()
 
     def copy(self):
         """Return a deep copy of the cube state."""
         return copy.deepcopy(self)
-
 
 # Import after class definition to avoid circular imports
 from math import cos, sin

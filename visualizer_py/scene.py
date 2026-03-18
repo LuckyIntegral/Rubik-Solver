@@ -80,8 +80,16 @@ class CubeRenderer:
 
         for cubie in cube_state.cubes:
             cubie_pos = np.array(cubie['pos'], dtype=float) * spacing
-            rx, ry, rz = cubie['rotation']
-            rot = self._rotation_matrix_xyz(rx, ry, rz)
+            rotation_state = cubie['rotation']
+            if (
+                isinstance(rotation_state, (list, tuple))
+                and len(rotation_state) == 3
+                and all(isinstance(v, (int, float)) for v in rotation_state)
+            ):
+                rx, ry, rz = rotation_state
+                rot = self._rotation_matrix_xyz(rx, ry, rz)
+            else:
+                rot = np.array(rotation_state, dtype=float)
 
             extra_rot = None
             if animation is not None:
