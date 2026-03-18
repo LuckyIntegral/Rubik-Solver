@@ -44,6 +44,10 @@ run		:
 		$(MAKE) re
 		./$(NAME)
 
+test_move	:
+		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test_move \
+			srcs/main_move_engine_test.cpp srcs/move.cpp
+
 v		:
 		$(MAKE) visualizer
 
