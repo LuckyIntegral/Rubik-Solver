@@ -220,7 +220,7 @@ class CubeVisualizer:
 
         dx = pos[0] - self.mouse_last_pos[0]
         dy = pos[1] - self.mouse_last_pos[1]
-        self.renderer.rotate_camera(dy * 0.005, dx * 0.005)
+        self.renderer.rotate_camera(-dy * 0.005, dx * 0.005)
         self.mouse_last_pos = pos
 
     def _handle_mouse_wheel(self, event):
@@ -739,7 +739,7 @@ class CubeVisualizer:
 
         self._draw_input(panel, "Scramble algorithm", "scramble", self.rects["scramble_input"], self.scramble_text)
         self._draw_input(panel, "Solve algorithm", "solve", self.rects["solve_input"], self.solve_text)
-        self._draw_input(panel, "N", "scramble_len", self.rects["scramble_len_input"], self.scramble_len_text)
+        self._draw_input(panel, "", "scramble_len", self.rects["scramble_len_input"], self.scramble_len_text)
         self._draw_button(
             panel,
             self.rects["generate_scramble"],
