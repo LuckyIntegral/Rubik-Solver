@@ -169,16 +169,21 @@ bool Thistlethwaite::solve_phase(const Cubie& cube, const PhaseRules& rules) {
     }
 }
 
-bool Thistlethwaite::solve(Cubie& cube) {
-    for (int i = 0; i < 4; ++i) {
+bool Thistlethwaite::solve(const std::vector<std::string>& scramble_moves) {
+    _path.clear();
+    _scramble_sequence = scramble_moves;
+    reset_current_cube_to_solved();
+    scramble();
 
+    for (int i = 0; i < 4; ++i) {
         size_t path_start = _path.size();
-        if (!solve_phase(cube, _phase_rules[i]))
+        if (!solve_phase(_current_cube, _phase_rules[i]))
             return false;
 
         for (size_t j = path_start; j < _path.size(); ++j) {
-            apply_move(cube, _path[j]);
+            apply_move(_current_cube, _path[j]);
         }
     }
-    return is_phase_4_complete(cube);
+    _solution_consumed = false;
+    return is_phase_4_complete(_current_cube);
 }

@@ -1,23 +1,23 @@
 #include "thistlethwaite.hpp"
 
-Thistlethwaite::Thistlethwaite(std::vector<std::string> scramble_sequence) :
-                _scramble_sequence(scramble_sequence),
+static void init_solved_cube(Cubie& cube) {
+    for (int i = 0; i < 8; ++i) {
+        cube.corner_perm[i] = static_cast<uint8_t>(i);
+        cube.corner_ori[i] = 0;
+    }
+    for (int i = 0; i < 12; ++i) {
+        cube.edge_perm[i] = static_cast<uint8_t>(i);
+        cube.edge_ori[i] = 0;
+    }
+}
+
+Thistlethwaite::Thistlethwaite() :
                 _eo_prune(2048, -1), _co_prune(2187, -1), _uds_prune(495, -1), _reduced_cp_prune(70, -1),
                 _reduced_ep_prune(70, -1), _phase3_cp_prune(40320, -1), _phase3_ep_prune(40320, -1),
                 _cp_prune(40320, -1), _ep8_prune(40320, -1), _ep4_prune(24, -1),
-                _current_cube{}, _solved_cube{} {
-    for (int i = 0; i < 8; ++i) {
-        _current_cube.corner_perm[i] = static_cast<uint8_t>(i);
-        _current_cube.corner_ori[i] = 0;
-        _solved_cube.corner_perm[i] = static_cast<uint8_t>(i);
-        _solved_cube.corner_ori[i] = 0;
-    }
-    for (int i = 0; i < 12; ++i) {
-        _current_cube.edge_perm[i] = static_cast<uint8_t>(i);
-        _current_cube.edge_ori[i] = 0;
-        _solved_cube.edge_perm[i] = static_cast<uint8_t>(i);
-        _solved_cube.edge_ori[i] = 0;
-    }
+                _current_cube{}, _solved_cube{}, _solution_consumed(true) {
+    init_solved_cube(_current_cube);
+    init_solved_cube(_solved_cube);
     static const Move phase_1_moves[] = {
                                             U, U2, U_PRIME,
                                             D, D2, D_PRIME,
@@ -73,7 +73,6 @@ Thistlethwaite::Thistlethwaite(std::vector<std::string> scramble_sequence) :
     };
 
     init_prune();
-    scramble();
 }
 
 Thistlethwaite::~Thistlethwaite() {
@@ -138,11 +137,25 @@ void Thistlethwaite::apply_path(Cubie& cube, const std::vector<Move>& path) {
     }
 }
 
-std::vector<std::string> Thistlethwaite::get_solution() const {
+void Thistlethwaite::reset_current_cube_to_solved() {
+    init_solved_cube(_current_cube);
+}
+
+void Thistlethwaite::reset_for_next_solve() {
+    _path.clear();
+    _scramble_sequence.clear();
+    init_solved_cube(_current_cube);
+}
+
+std::vector<std::string> Thistlethwaite::get_solution() {
+    if (_solution_consumed)
+        return {"error: get_solution called more than once; call solve() first"};
     std::vector<std::string> out;
     out.reserve(_path.size());
     for (Move m : _path)
         out.push_back(move_to_string(m));
+    reset_for_next_solve();
+    _solution_consumed = true;
     return out;
 }
 
