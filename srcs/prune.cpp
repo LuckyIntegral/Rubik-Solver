@@ -56,6 +56,30 @@ static bool is_tetrad_a_corner(Corner c) {
     return (c == URF || c == ULB || c == DLF || c == DRB);
 }
 
+bool Thistlethwaite::has_even_corner_parity(const Cubie& cube) const {
+    int parity = 0;
+
+    for (int i = 0; i < 8; ++i) {
+        for (int j = i + 1; j < 8; ++j) {
+            if (cube.corner_perm[i] > cube.corner_perm[j])
+                parity ^= 1;
+        }
+    }
+    return parity == 0;
+}
+
+bool Thistlethwaite::has_even_edge_parity(const Cubie& cube) const {
+    int parity = 0;
+
+    for (int i = 0; i < 12; ++i) {
+        for (int j = i + 1; j < 12; ++j) {
+            if (cube.edge_perm[i] > cube.edge_perm[j])
+                parity ^= 1;
+        }
+    }
+    return parity == 0;
+}
+
 int Thistlethwaite::encodeReducedCP(const Cubie& cube) const {
     int index = 0;
     int r = 4;
@@ -93,6 +117,74 @@ int Thistlethwaite::encodeReducedEP(const Cubie& cube) const {
 
         if (r == 0)
             break;
+    }
+    return index;
+}
+
+int Thistlethwaite::encodeCP(const Cubie& cube) const {
+    int index = 0;
+
+    for (int i = 0; i < 8; ++i) {
+        int smaller = 0;
+        for (int j = i + 1; j < 8; ++j) {
+            if (cube.corner_perm[j] < cube.corner_perm[i])
+                ++smaller;
+        }
+        index = index * (8 - i) + smaller;
+    }
+    return index;
+}
+
+int Thistlethwaite::encodeEP8(const Cubie& cube) const {
+    Edge target[8] = {UR, UF, UL, UB, DR, DF, DL, DB};
+    int perm[8];
+    int k = 0;
+
+    for (int i = 0; i < 12; ++i) {
+        Edge e = static_cast<Edge>(cube.edge_perm[i]);
+        for (int j = 0; j < 8; ++j) {
+            if (e == target[j]) {
+                perm[k++] = j;
+                break;
+            }
+        }
+    }
+
+    int index = 0;
+    for (int i = 0; i < 8; ++i) {
+        int smaller = 0;
+        for (int j = i + 1; j < 8; ++j) {
+            if (perm[j] < perm[i])
+                ++smaller;
+        }
+        index = index * (8 - i) + smaller;
+    }
+    return index;
+}
+
+int Thistlethwaite::encodeEP4(const Cubie& cube) const {
+    Edge target[4] = {FR, FL, BL, BR};
+    int perm[4];
+    int k = 0;
+
+    for (int i = 0; i < 12; ++i) {
+        Edge e = static_cast<Edge>(cube.edge_perm[i]);
+        for (int j = 0; j < 4; ++j) {
+            if (e == target[j]) {
+                perm[k++] = j;
+                break;
+            }
+        }
+    }
+
+    int index = 0;
+    for (int i = 0; i < 4; ++i) {
+        int smaller = 0;
+        for (int j = i + 1; j < 4; ++j) {
+            if (perm[j] < perm[i])
+                ++smaller;
+        }
+        index = index * (4 - i) + smaller;
     }
     return index;
 }
@@ -221,6 +313,87 @@ void Thistlethwaite::init_reduced_ep_prune() {
     }
 }
 
+void Thistlethwaite::init_cp_prune() {
+    int solved_cp = encodeCP(_solved_cube);
+    std::queue<Cubie> q;
+    q.push(_solved_cube);
+    _cp_prune[solved_cp] = 0;
+
+    while (!q.empty()) {
+        Cubie cube = q.front();
+        q.pop();
+
+        int current_cp = encodeCP(cube);
+        int current_depth = _cp_prune[current_cp];
+
+        for (int i = 0; i < _phase_rules[3].move_count; ++i) {
+            Cubie next = after_move(cube, _phase_rules[3].moves[i]);
+            int next_cp = encodeCP(next);
+            if (_cp_prune[next_cp] == -1) {
+                _cp_prune[next_cp] = current_depth + 1;
+                q.push(next);
+            }
+        }
+    }
+}
+
+void Thistlethwaite::init_ep8_prune() {
+    int solved_ep8 = encodeEP8(_solved_cube);
+    std::queue<Cubie> q;
+    q.push(_solved_cube);
+    _ep8_prune[solved_ep8] = 0;
+
+    while (!q.empty()) {
+        Cubie cube = q.front();
+        q.pop();
+
+        int current_ep8 = encodeEP8(cube);
+        int current_depth = _ep8_prune[current_ep8];
+        for (int i = 0; i < _phase_rules[3].move_count; ++i) {
+            Cubie next = after_move(cube, _phase_rules[3].moves[i]);
+            int next_ep8 = encodeEP8(next);
+            if (_ep8_prune[next_ep8] == -1) {
+                _ep8_prune[next_ep8] = current_depth + 1;
+                q.push(next);
+            }
+        }
+    }
+}
+
+void Thistlethwaite::init_ep4_prune() {
+    int solved_ep4 = encodeEP4(_solved_cube);
+    std::queue<Cubie> q;
+    q.push(_solved_cube);
+    _ep4_prune[solved_ep4] = 0;
+
+    while (!q.empty()) {
+        Cubie cube = q.front();
+        q.pop();
+
+        int current_ep4 = encodeEP4(cube);
+        int current_depth = _ep4_prune[current_ep4];
+        for (int i = 0; i < _phase_rules[3].move_count; ++i) {
+            Cubie next = after_move(cube, _phase_rules[3].moves[i]);
+            int next_ep4 = encodeEP4(next);
+            if (_ep4_prune[next_ep4] == -1) {
+                _ep4_prune[next_ep4] = current_depth + 1;
+                q.push(next);
+            }
+        }
+    }
+}
+
+void Thistlethwaite::init_prune() {
+    init_eo_prune();
+    init_co_prune();
+    init_uds_prune();
+    init_reduced_cp_prune();
+    init_reduced_ep_prune();
+    init_cp_prune();
+    init_ep8_prune();
+    init_ep4_prune();
+}
+
 bool Thistlethwaite::is_pruned() {
     for (int i = 0; i < 2048; ++i) {
         if (_eo_prune[i] == -1) {
@@ -244,6 +417,11 @@ bool Thistlethwaite::is_pruned() {
     }
     for (int i = 0; i < 70; ++i) {
         if (_reduced_ep_prune[i] == -1) {
+            return false;
+        }
+    }
+    for (int i = 0; i < 24; ++i) {
+        if (_ep4_prune[i] == -1) {
             return false;
         }
     }

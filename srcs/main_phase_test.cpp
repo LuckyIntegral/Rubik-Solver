@@ -1,8 +1,9 @@
 #include <chrono>
-#include <future>
 #include <iostream>
 #include <random>
 #include <stdexcept>
+#include <sys/wait.h>
+#include <unistd.h>
 #include <vector>
 
 #include "cubie.h"
@@ -67,7 +68,19 @@ struct SolveResult {
 };
 
 static SolveResult run_solve_with_timeout(const std::vector<std::string>& scramble, int timeout_ms) {
-    auto task = [&scramble]() {
+    int pipefd[2];
+    if (pipe(pipefd) == -1)
+        return {false, 0, false, 0};
+
+    pid_t pid = fork();
+    if (pid == -1) {
+        close(pipefd[0]);
+        close(pipefd[1]);
+        return {false, 0, false, 0};
+    }
+
+    if (pid == 0) {
+        close(pipefd[0]);
         Thistlethwaite t(scramble);
         Cubie cube = make_solved_cube();
         apply_scramble(cube, scramble);
@@ -76,16 +89,40 @@ static SolveResult run_solve_with_timeout(const std::vector<std::string>& scramb
         long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - start).count();
         size_t len = found ? t.get_solution_length() : 0;
-        return std::make_tuple(found, ms, len);
-    };
-
-    auto future = std::async(std::launch::async, task);
-    auto status = future.wait_for(std::chrono::milliseconds(timeout_ms));
-
-    if (status == std::future_status::timeout) {
-        return {false, timeout_ms, true, 0};
+        write(pipefd[1], &found, sizeof(found));
+        write(pipefd[1], &ms, sizeof(ms));
+        write(pipefd[1], &len, sizeof(len));
+        close(pipefd[1]);
+        _exit(0);
     }
-    auto [found, ms, len] = future.get();
+
+    close(pipefd[1]);
+    auto start = std::chrono::steady_clock::now();
+    int wstatus;
+    pid_t result;
+
+    for (;;) {
+        result = waitpid(pid, &wstatus, WNOHANG);
+        if (result == pid)
+            break;
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - start).count();
+        if (elapsed >= timeout_ms) {
+            kill(pid, SIGKILL);
+            waitpid(pid, &wstatus, 0);
+            close(pipefd[0]);
+            return {false, timeout_ms, true, 0};
+        }
+        usleep(10000);
+    }
+
+    bool found;
+    long long ms;
+    size_t len;
+    read(pipefd[0], &found, sizeof(found));
+    read(pipefd[0], &ms, sizeof(ms));
+    read(pipefd[0], &len, sizeof(len));
+    close(pipefd[0]);
     return {found, ms, false, len};
 }
 
@@ -102,7 +139,7 @@ int main() {
     std::mt19937 seed_rng(std::random_device{}());
     for (int len = 1; len <= 20; ++len) {
         std::vector<std::string> scramble = random_scramble(len, seed_rng());
-        SolveResult r = run_solve_with_timeout(scramble, 2000);
+        SolveResult r = run_solve_with_timeout(scramble, 5000);
 
         std::cout << "len " << len << ": "
                   << (r.ok ? GREEN : RED) << (r.timeout ? "TIMEOUT" : (r.ok ? "OK" : "FAIL"))

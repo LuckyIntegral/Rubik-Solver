@@ -3,7 +3,7 @@
 Thistlethwaite::Thistlethwaite(std::vector<std::string> scramble_sequence) :
                 _scramble_sequence(scramble_sequence),
                 _eo_prune(2048, -1), _co_prune(2187, -1), _uds_prune(495, -1), _reduced_cp_prune(70, -1),
-                _reduced_ep_prune(70, -1),
+                _reduced_ep_prune(70, -1), _cp_prune(40320, -1), _ep8_prune(40320, -1), _ep4_prune(24, -1),
                 _current_cube{}, _solved_cube{} {
     for (int i = 0; i < 8; ++i) {
         _current_cube.corner_perm[i] = static_cast<uint8_t>(i);
@@ -40,6 +40,7 @@ Thistlethwaite::Thistlethwaite(std::vector<std::string> scramble_sequence) :
                                             F2,
                                             B2
                                         };
+    static const Move phase_4_moves[] = {U2, D2, L2, R2, F2, B2};
 
     _phase_rules[0] = {
         .phase = 0,
@@ -62,12 +63,15 @@ Thistlethwaite::Thistlethwaite(std::vector<std::string> scramble_sequence) :
         .is_goal = [this](const Cubie& c) { return is_phase_3_solved(c); },
         .heuristic = [this](const Cubie& c) { return heuristic_phase_3(c); }
     };
+    _phase_rules[3] = {
+        .phase = 3,
+        .moves = phase_4_moves,
+        .move_count = sizeof(phase_4_moves) / sizeof(phase_4_moves[0]),
+        .is_goal = [this](const Cubie& c) { return is_phase_4_solved(c); },
+        .heuristic = [this](const Cubie& c) { return heuristic_phase_4(c); }
+    };
 
-    init_eo_prune();
-    init_co_prune();
-    init_uds_prune();
-    init_reduced_cp_prune();
-    init_reduced_ep_prune();
+    init_prune();
     scramble();
 }
 

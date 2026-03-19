@@ -20,3 +20,14 @@ int Thistlethwaite::heuristic_phase_3(const Cubie& cube) {
         return 0;
     return std::max(cp, ep);
 }
+
+int Thistlethwaite::heuristic_phase_4(const Cubie& cube) {
+    int cp  = _cp_prune[encodeCP(cube)];
+    int ep8 = _ep8_prune[encodeEP8(cube)];
+    int ep4 = _ep4_prune[encodeEP4(cube)];
+
+    if (cp < 0 || ep8 < 0 || ep4 < 0)
+        return 0;
+
+    return std::max(cp, std::max(ep8, ep4));
+}

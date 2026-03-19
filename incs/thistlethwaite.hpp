@@ -12,9 +12,12 @@ class Thistlethwaite {
         std::vector<int>            _uds_prune;
         std::vector<int>            _reduced_cp_prune;
         std::vector<int>            _reduced_ep_prune;
+        std::vector<int>            _cp_prune;
+        std::vector<int>            _ep8_prune;
+        std::vector<int>            _ep4_prune;
         Cubie                       _current_cube;
         Cubie                       _solved_cube;
-        PhaseRules                  _phase_rules[3];
+        PhaseRules                  _phase_rules[4];
 
 
 
@@ -29,8 +32,13 @@ class Thistlethwaite {
         int     encodeUDSlice(const Cubie& cube) const;
         bool    corners_in_phase3_tetrads(const Cubie& cube) const;
         bool    edges_in_phase3_groups(const Cubie& cube) const;
+        bool    has_even_corner_parity(const Cubie& cube) const;
+        bool    has_even_edge_parity(const Cubie& cube) const;
         int     encodeReducedCP(const Cubie& cube) const;
         int     encodeReducedEP(const Cubie& cube) const;
+        int     encodeCP(const Cubie& cube) const;
+        int     encodeEP8(const Cubie& cube) const;
+        int     encodeEP4(const Cubie& cube) const;
         int     binomial(int n, int k) const;
     
         void    init_eo_prune();
@@ -38,14 +46,20 @@ class Thistlethwaite {
         void    init_uds_prune();
         void    init_reduced_cp_prune();
         void    init_reduced_ep_prune();
+        void    init_cp_prune();
+        void    init_ep8_prune();
+        void    init_ep4_prune();
+        void    init_prune();
 
         int     heuristic_phase_1(const Cubie& cube);
         int     heuristic_phase_2(const Cubie& cube);
         int     heuristic_phase_3(const Cubie& cube);
-
+        int     heuristic_phase_4(const Cubie& cube);
+        
         bool    is_phase_1_solved(const Cubie& cube) const;
         bool    is_phase_2_solved(const Cubie& cube) const;
         bool    is_phase_3_solved(const Cubie& cube) const;
+        bool    is_phase_4_solved(const Cubie& cube) const;
         
         bool    dfs(const Cubie& cube, const PhaseRules& rules, int depth, int limit, std::vector<Move>& path, Move last_move);
         bool    solve_phase(const Cubie& cube, const PhaseRules& rules);
@@ -61,6 +75,7 @@ class Thistlethwaite {
         bool    is_phase_1_complete(const Cubie& cube) const;
         bool    is_phase_2_complete(const Cubie& cube) const;
         bool    is_phase_3_complete(const Cubie& cube) const;
+        bool    is_phase_4_complete(const Cubie& cube) const;
         bool    is_pruned();
 };
 
