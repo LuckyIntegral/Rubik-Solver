@@ -132,7 +132,13 @@ bool Thistlethwaite::is_pruned() {
         }
     }
     for (int i = 0; i < 2187; ++i) {
+
         if (_co_prune[i] == -1) {
+            return false;
+        }
+    }
+    for (int i = 0; i < 495; ++i) {
+        if (_uds_prune[i] == -1) {
             return false;
         }
     }
