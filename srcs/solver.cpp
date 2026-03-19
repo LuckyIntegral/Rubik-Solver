@@ -63,22 +63,29 @@ bool Thistlethwaite::dfs(const Cubie& cube, const PhaseRules& rules, int depth, 
 
 bool Thistlethwaite::solve_phase(const Cubie& cube, const PhaseRules& rules) {
     int limit = rules.heuristic(cube);
+    std::vector<Move> path;
 
     while (true) {
-        _path.clear();
-        if (dfs(cube, rules, 0, limit, _path, NOMOVE))
+        path.clear();
+        if (dfs(cube, rules, 0, limit, path, NOMOVE)){
+            _path.insert(_path.end(), path.begin(), path.end());
             return true;
+        }
         ++limit;
         if (limit > 50)
             return false;
     }
+    return false;
 }
 
 bool Thistlethwaite::solve(Cubie& cube) {
     for (int i = 0; i < 2; ++i) {
+        size_t path_start = _path.size();
         if (!solve_phase(cube, _phase_rules[i]))
             return false;
-        apply_path(cube, _path);
+        for (size_t j = path_start; j < _path.size(); ++j) {
+            apply_move(cube, _path[j]);
+        }
     }
     return true;
 }
