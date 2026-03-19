@@ -214,37 +214,3 @@ void Thistlethwaite::init_prune() {
     init_ep8_prune();
     init_ep4_prune();
 }
-
-bool Thistlethwaite::is_pruned() {
-    for (int i = 0; i < 2048; ++i) {
-        if (_eo_prune[i] == -1) {
-            return false;
-        }
-    }
-    for (int i = 0; i < 2187; ++i) {
-        if (_co_prune[i] == -1) {
-            return false;
-        }
-    }
-    for (int i = 0; i < 495; ++i) {
-        if (_uds_prune[i] == -1) {
-            return false;
-        }
-    }
-    for (int i = 0; i < 40320; ++i) {
-        if (_phase3_cp_prune[i] == -1) {
-            return false;
-        }
-    }
-    for (int i = 0; i < 40320; ++i) {
-        if (_phase3_ep_prune[i] == -1) {
-            return false;
-        }
-    }
-    for (int i = 0; i < 24; ++i) {
-        if (_ep4_prune[i] == -1) {
-            return false;
-        }
-    }
-    return true;
-}

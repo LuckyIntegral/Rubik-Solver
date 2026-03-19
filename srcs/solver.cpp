@@ -128,7 +128,7 @@ bool Thistlethwaite::is_phase_4_complete(const Cubie& cube) const {
     return is_phase_4_solved(cube);
 }
 
-int Thistlethwaite::dfs(const Cubie& cube, const PhaseRules& rules, int depth, int limit, std::vector<Move>& path, Move last_move) {
+int Thistlethwaite::dfs(Cubie& cube, const PhaseRules& rules, int depth, int limit, std::vector<Move>& path, Move last_move) {
     if (rules.is_goal(cube))
         return -1;
 
@@ -142,16 +142,19 @@ int Thistlethwaite::dfs(const Cubie& cube, const PhaseRules& rules, int depth, i
         if (!is_valid_move(move, last_move, rules))
             continue;
 
-        Cubie next = after_move(cube, move);
+        apply_move(cube, move);
         path.push_back(move);
 
-        int result = dfs(next, rules, depth + 1, limit, path, move);
-        if (result == -1)
+        int result = dfs(cube, rules, depth + 1, limit, path, move);
+        if (result == -1) {
+            apply_move(cube, inverse_move(move));
             return -1;
+        }
         if (result > 0 && result < min_exceeded)
             min_exceeded = result;
 
         path.pop_back();
+        apply_move(cube, inverse_move(move));
     }
     return (min_exceeded == INT_MAX) ? 0 : min_exceeded;
 }
@@ -159,10 +162,12 @@ int Thistlethwaite::dfs(const Cubie& cube, const PhaseRules& rules, int depth, i
 bool Thistlethwaite::solve_phase(const Cubie& cube, const PhaseRules& rules) {
     int limit = rules.heuristic(cube);
     std::vector<Move> path;
+    Cubie work;
 
     while (true) {
         path.clear();
-        int result = dfs(cube, rules, 0, limit, path, NOMOVE);
+        work = cube;
+        int result = dfs(work, rules, 0, limit, path, NOMOVE);
         if (result == -1) {
             _path.insert(_path.end(), path.begin(), path.end());
             return true;

@@ -137,6 +137,34 @@ Cubie after_move(Cubie const& cube, Move move) {
     return result;
 }
 
+Move inverse_move(Move move) {
+    switch (move) {
+        case U: return U_PRIME; case U_PRIME: return U; case U2: return U2;
+        case D: return D_PRIME; case D_PRIME: return D; case D2: return D2;
+        case L: return L_PRIME; case L_PRIME: return L; case L2: return L2;
+        case R: return R_PRIME; case R_PRIME: return R; case R2: return R2;
+        case F: return F_PRIME; case F_PRIME: return F; case F2: return F2;
+        case B: return B_PRIME; case B_PRIME: return B; case B2: return B2;
+        default: return NOMOVE;
+    }
+}
+
+bool operator==(const Cubie& a, const Cubie& b) {
+    for (int i = 0; i < 8; ++i) {
+        if (a.corner_perm[i] != b.corner_perm[i] || a.corner_ori[i] != b.corner_ori[i])
+            return false;
+    }
+    for (int i = 0; i < 12; ++i) {
+        if (a.edge_perm[i] != b.edge_perm[i] || a.edge_ori[i] != b.edge_ori[i])
+            return false;
+    }
+    return true;
+}
+
+bool operator!=(const Cubie& a, const Cubie& b) {
+    return !(a == b);
+}
+
 void Thistlethwaite::apply_move(Cubie& cube, Move move) {
     do_apply_move(cube, move);
 }
