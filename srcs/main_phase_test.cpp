@@ -170,7 +170,6 @@ static std::vector<std::string> parse_scramble_args(int argc, char** argv) {
 }
 
 static int run_single_scramble(const std::vector<std::string>& scramble) {
-    static const int TIMEOUT_MS = 60000;
     static const int MAX_ACCEPTABLE_MS = 3000;
     static const int MAX_MOVES = 52;
 
@@ -192,20 +191,40 @@ static int run_single_scramble(const std::vector<std::string>& scramble) {
     std::cout << BOLD << "Single scramble test" << RESET << "\n";
     std::cout << "  scramble: " << CYAN << scramble_to_string(scramble) << RESET << "\n";
 
-    SolveResult r = run_solve_with_timeout(scramble, TIMEOUT_MS);
+    Thistlethwaite t(scramble);
+    Cubie cube = make_solved_cube();
+    apply_scramble(cube, scramble);
+    auto start = std::chrono::steady_clock::now();
+    bool found = t.solve(cube);
+    long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - start).count();
+    size_t len = found ? t.get_solution_length() : 0;
 
-    std::cout << "  time:  " << r.ms << " ms\n";
-    std::cout << "  moves: " << r.solution_len << "\n";
+    std::cout << "  time:  " << ms << " ms\n";
+    std::cout << "  moves: " << len << "\n";
+    if (found)
+        std::cout << "  path:  " << CYAN << scramble_to_string(t.get_solution()) << RESET << "\n";
 
-    if (!r.ok || r.timeout) {
-        std::cout << RED << "  result: " << (r.timeout ? "TIMEOUT" : "FAILED") << RESET << "\n";
+    if (!found) {
+        std::cout << RED << "  result: FAILED - path not found" << RESET << "\n";
         return 1;
     }
-    if (r.ms > MAX_ACCEPTABLE_MS || r.solution_len > static_cast<size_t>(MAX_MOVES)) {
-        std::cout << RED << "  result: FAIL" << RESET;
-        if (r.ms > MAX_ACCEPTABLE_MS) std::cout << " (time > " << MAX_ACCEPTABLE_MS << " ms)";
-        if (r.solution_len > static_cast<size_t>(MAX_MOVES)) std::cout << " (moves > " << MAX_MOVES << ")";
-        std::cout << "\n";
+
+    Cubie verify = make_solved_cube();
+    apply_scramble(verify, scramble);
+    for (const auto& m : t.get_solution())
+        apply_move(verify, parse_move(m));
+    bool path_correct = t_init.is_phase_4_complete(verify);
+    if (!path_correct) {
+        std::cout << RED << "  result: FAILED - wrong path (does not solve cube)" << RESET << "\n";
+        return 1;
+    }
+    if (ms > MAX_ACCEPTABLE_MS) {
+        std::cout << RED << "  result: FAILED - timeout (" << ms << " ms > " << MAX_ACCEPTABLE_MS << " ms)" << RESET << "\n";
+        return 1;
+    }
+    if (len > static_cast<size_t>(MAX_MOVES)) {
+        std::cout << RED << "  result: FAILED - solution too long (" << len << " > " << MAX_MOVES << " moves)" << RESET << "\n";
         return 1;
     }
 

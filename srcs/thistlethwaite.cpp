@@ -138,7 +138,15 @@ void Thistlethwaite::apply_path(Cubie& cube, const std::vector<Move>& path) {
     }
 }
 
-std::string Thistlethwaite::move_to_string(Move move) {
+std::vector<std::string> Thistlethwaite::get_solution() const {
+    std::vector<std::string> out;
+    out.reserve(_path.size());
+    for (Move m : _path)
+        out.push_back(move_to_string(m));
+    return out;
+}
+
+std::string Thistlethwaite::move_to_string(Move move) const {
     switch (move) {
         case U: return "U";
         case U2: return "U2";

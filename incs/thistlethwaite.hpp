@@ -27,7 +27,7 @@ class Thistlethwaite {
         Cubie   after_move(Cubie const& cube, Move move);
         void    scramble();
         void    apply_path(Cubie& cube, const std::vector<Move>& path);
-        std::string move_to_string(Move move);
+        std::string move_to_string(Move move) const;
 
         int     encodeEO(const Cubie& cube) const;
         int     encodeCO(const Cubie& cube) const;
@@ -78,6 +78,7 @@ class Thistlethwaite {
 
         bool    solve(Cubie& cube);
         size_t  get_solution_length() const;
+        std::vector<std::string> get_solution() const;
 
         // testing functions
         bool    is_phase_1_complete(const Cubie& cube) const;
