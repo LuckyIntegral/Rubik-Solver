@@ -10,8 +10,6 @@ class Thistlethwaite {
         std::vector<int>            _eo_prune;
         std::vector<int>            _co_prune;
         std::vector<int>            _uds_prune;
-        std::vector<int>            _reduced_cp_prune;
-        std::vector<int>            _reduced_ep_prune;
         std::vector<int>            _phase3_cp_prune;
         std::vector<int>            _phase3_ep_prune;
         std::vector<int>            _cp_prune;
@@ -50,8 +48,6 @@ class Thistlethwaite {
         void    init_eo_prune();
         void    init_co_prune();
         void    init_uds_prune();
-        void    init_reduced_cp_prune();
-        void    init_reduced_ep_prune();
         void    init_phase3_cp_prune();
         void    init_phase3_ep_prune();
         void    init_cp_prune();
@@ -69,7 +65,7 @@ class Thistlethwaite {
         bool    is_phase_3_solved(const Cubie& cube) const;
         bool    is_phase_4_solved(const Cubie& cube) const;
         
-        bool    dfs(const Cubie& cube, const PhaseRules& rules, int depth, int limit, std::vector<Move>& path, Move last_move);
+        int     dfs(const Cubie& cube, const PhaseRules& rules, int depth, int limit, std::vector<Move>& path, Move last_move);
         bool    solve_phase(const Cubie& cube, const PhaseRules& rules);
 
     public:
