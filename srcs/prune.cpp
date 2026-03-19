@@ -38,6 +38,56 @@ static bool is_phase3_group_edge(Edge e) {
     return (e == UF || e == UB || e == DF || e == DB);
 }
 
+static bool is_udrl_edge(Edge e) {
+    return (e == UR || e == UL || e == DR || e == DL);
+}
+
+static int lehmer4(const int perm[4]) {
+    int index = 0;
+    for (int i = 0; i < 4; ++i) {
+        int smaller = 0;
+        for (int j = i + 1; j < 4; ++j) {
+            if (perm[j] < perm[i]) ++smaller;
+        }
+        int fact = 1;
+        for (int k = 1; k <= 3 - i; ++k) fact *= k;
+        index += smaller * fact;
+    }
+    return index;
+}
+
+static int corner_to_tetrad_a_id(Corner c) {
+    if (c == URF) return 0;
+    if (c == ULB) return 1;
+    if (c == DLF) return 2;
+    if (c == DRB) return 3;
+    return -1;
+}
+
+static int corner_to_tetrad_b_id(Corner c) {
+    if (c == UFL) return 0;
+    if (c == UBR) return 1;
+    if (c == DFR) return 2;
+    if (c == DBL) return 3;
+    return -1;
+}
+
+static int edge_to_udfb_id(Edge e) {
+    if (e == UF) return 0;
+    if (e == UB) return 1;
+    if (e == DF) return 2;
+    if (e == DB) return 3;
+    return -1;
+}
+
+static int edge_to_udrl_id(Edge e) {
+    if (e == UR) return 0;
+    if (e == UL) return 1;
+    if (e == DR) return 2;
+    if (e == DL) return 3;
+    return -1;
+}
+
 int Thistlethwaite::encodeUDSlice(const Cubie& cube) const {
     int index = 0;
     int r = 4;
@@ -119,6 +169,74 @@ int Thistlethwaite::encodeReducedEP(const Cubie& cube) const {
             break;
     }
     return index;
+}
+
+int Thistlethwaite::encodeTetradAPerm(const Cubie& cube) const {
+    int pos_a[4];
+    int k = 0;
+    for (int pos = 0; pos < 8; ++pos) {
+        if (is_tetrad_a_corner(static_cast<Corner>(cube.corner_perm[pos]))) {
+            pos_a[k++] = pos;
+        }
+    }
+    int perm[4];
+    for (int i = 0; i < 4; ++i) {
+        Corner c = static_cast<Corner>(cube.corner_perm[pos_a[i]]);
+        perm[i] = corner_to_tetrad_a_id(c);
+    }
+    return lehmer4(perm);
+}
+
+int Thistlethwaite::encodeTetradBPerm(const Cubie& cube) const {
+    int pos_b[4];
+    int k = 0;
+    for (int pos = 0; pos < 8; ++pos) {
+        if (!is_tetrad_a_corner(static_cast<Corner>(cube.corner_perm[pos]))) {
+            pos_b[k++] = pos;
+        }
+    }
+    int perm[4];
+    for (int i = 0; i < 4; ++i) {
+        Corner c = static_cast<Corner>(cube.corner_perm[pos_b[i]]);
+        perm[i] = corner_to_tetrad_b_id(c);
+    }
+    return lehmer4(perm);
+}
+
+int Thistlethwaite::encodeUDFBPerm(const Cubie& cube) const {
+    static const int ud_layer[8] = {UR, UF, UL, UB, DR, DF, DL, DB};
+    int pos_udfb[4];
+    int k = 0;
+    for (int i = 0; i < 8; ++i) {
+        int pos = ud_layer[i];
+        if (is_phase3_group_edge(static_cast<Edge>(cube.edge_perm[pos]))) {
+            pos_udfb[k++] = pos;
+        }
+    }
+    int perm[4];
+    for (int i = 0; i < 4; ++i) {
+        Edge e = static_cast<Edge>(cube.edge_perm[pos_udfb[i]]);
+        perm[i] = edge_to_udfb_id(e);
+    }
+    return lehmer4(perm);
+}
+
+int Thistlethwaite::encodeUDRLPerm(const Cubie& cube) const {
+    static const int ud_layer[8] = {UR, UF, UL, UB, DR, DF, DL, DB};
+    int pos_udrl[4];
+    int k = 0;
+    for (int i = 0; i < 8; ++i) {
+        int pos = ud_layer[i];
+        if (is_udrl_edge(static_cast<Edge>(cube.edge_perm[pos]))) {
+            pos_udrl[k++] = pos;
+        }
+    }
+    int perm[4];
+    for (int i = 0; i < 4; ++i) {
+        Edge e = static_cast<Edge>(cube.edge_perm[pos_udrl[i]]);
+        perm[i] = edge_to_udrl_id(e);
+    }
+    return lehmer4(perm);
 }
 
 int Thistlethwaite::encodeCP(const Cubie& cube) const {
@@ -313,6 +431,62 @@ void Thistlethwaite::init_reduced_ep_prune() {
     }
 }
 
+void Thistlethwaite::init_phase3_cp_prune() {
+    int solved_composite = encodeReducedCP(_solved_cube) * 576
+        + encodeTetradAPerm(_solved_cube) * 24 + encodeTetradBPerm(_solved_cube);
+    std::queue<Cubie> q;
+    q.push(_solved_cube);
+    _phase3_cp_prune[solved_composite] = 0;
+
+    while (!q.empty()) {
+        Cubie cube = q.front();
+        q.pop();
+
+        int current_composite = encodeReducedCP(cube) * 576
+            + encodeTetradAPerm(cube) * 24 + encodeTetradBPerm(cube);
+        int current_depth = _phase3_cp_prune[current_composite];
+
+        for (int i = 0; i < _phase_rules[2].move_count; ++i) {
+            Cubie next = after_move(cube, _phase_rules[2].moves[i]);
+            int next_composite = encodeReducedCP(next) * 576
+                + encodeTetradAPerm(next) * 24 + encodeTetradBPerm(next);
+
+            if (_phase3_cp_prune[next_composite] == -1) {
+                _phase3_cp_prune[next_composite] = current_depth + 1;
+                q.push(next);
+            }
+        }
+    }
+}
+
+void Thistlethwaite::init_phase3_ep_prune() {
+    int solved_composite = encodeReducedEP(_solved_cube) * 576
+        + encodeUDFBPerm(_solved_cube) * 24 + encodeUDRLPerm(_solved_cube);
+    std::queue<Cubie> q;
+    q.push(_solved_cube);
+    _phase3_ep_prune[solved_composite] = 0;
+
+    while (!q.empty()) {
+        Cubie cube = q.front();
+        q.pop();
+
+        int current_composite = encodeReducedEP(cube) * 576
+            + encodeUDFBPerm(cube) * 24 + encodeUDRLPerm(cube);
+        int current_depth = _phase3_ep_prune[current_composite];
+
+        for (int i = 0; i < _phase_rules[2].move_count; ++i) {
+            Cubie next = after_move(cube, _phase_rules[2].moves[i]);
+            int next_composite = encodeReducedEP(next) * 576
+                + encodeUDFBPerm(next) * 24 + encodeUDRLPerm(next);
+
+            if (_phase3_ep_prune[next_composite] == -1) {
+                _phase3_ep_prune[next_composite] = current_depth + 1;
+                q.push(next);
+            }
+        }
+    }
+}
+
 void Thistlethwaite::init_cp_prune() {
     int solved_cp = encodeCP(_solved_cube);
     std::queue<Cubie> q;
@@ -389,6 +563,8 @@ void Thistlethwaite::init_prune() {
     init_uds_prune();
     init_reduced_cp_prune();
     init_reduced_ep_prune();
+    init_phase3_cp_prune();
+    init_phase3_ep_prune();
     init_cp_prune();
     init_ep8_prune();
     init_ep4_prune();
@@ -417,6 +593,16 @@ bool Thistlethwaite::is_pruned() {
     }
     for (int i = 0; i < 70; ++i) {
         if (_reduced_ep_prune[i] == -1) {
+            return false;
+        }
+    }
+    for (int i = 0; i < 40320; ++i) {
+        if (_phase3_cp_prune[i] == -1) {
+            return false;
+        }
+    }
+    for (int i = 0; i < 40320; ++i) {
+        if (_phase3_ep_prune[i] == -1) {
             return false;
         }
     }

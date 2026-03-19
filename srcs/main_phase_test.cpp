@@ -137,18 +137,33 @@ int main() {
     std::cout << GREEN << "is_pruned: OK\n" << RESET;
 
     std::mt19937 seed_rng(std::random_device{}());
-    for (int len = 1; len <= 20; ++len) {
-        std::vector<std::string> scramble = random_scramble(len, seed_rng());
-        SolveResult r = run_solve_with_timeout(scramble, 5000);
 
+    static const int TIMEOUT_MS = 5000;
+
+    // Quick smoke tests (low length)
+    for (int len : {5, 10}) {
+        std::vector<std::string> scramble = random_scramble(len, seed_rng());
+        SolveResult r = run_solve_with_timeout(scramble, TIMEOUT_MS);
         std::cout << "len " << len << ": "
                   << (r.ok ? GREEN : RED) << (r.timeout ? "TIMEOUT" : (r.ok ? "OK" : "FAIL"))
                   << RESET << " " << r.ms << " ms";
-        if (r.ok)
-            std::cout << " solution_len " << r.solution_len;
+        if (r.ok) std::cout << " solution_len " << r.solution_len;
         std::cout << "\n";
-
         if (!r.ok) all_ok = false;
+    }
+
+    // High-length tests
+    for (int len : {20, 25, 30, 35, 40}) {
+        for (int i = 0; i < 4; ++i) {
+            std::vector<std::string> scramble = random_scramble(len, seed_rng());
+            SolveResult r = run_solve_with_timeout(scramble, TIMEOUT_MS);
+            std::cout << "len " << len << " #" << (i + 1) << ": "
+                      << (r.ok ? GREEN : RED) << (r.timeout ? "TIMEOUT" : (r.ok ? "OK" : "FAIL"))
+                      << RESET << " " << r.ms << " ms";
+            if (r.ok) std::cout << " solution_len " << r.solution_len;
+            std::cout << "\n";
+            if (!r.ok) all_ok = false;
+        }
     }
 
     std::cout << "\n" << (all_ok ? GREEN : RED) << (all_ok ? "All passed" : "Some failed") << RESET << "\n";
