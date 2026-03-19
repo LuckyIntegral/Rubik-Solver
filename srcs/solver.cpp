@@ -17,6 +17,10 @@ static bool is_valid_move(Move move, Move last_move, const PhaseRules& rules) {
         else
             return move_group != last_move_group;
     }
+    else if (rules.phase == 3) {
+        if (move != last_move)
+            return true;
+    }
     return false;
 }
 
@@ -77,7 +81,27 @@ bool Thistlethwaite::edges_in_phase3_groups(const Cubie& cube) const {
 bool Thistlethwaite::is_phase_3_solved(const Cubie& cube) const {
     return is_phase_2_solved(cube)
         && corners_in_phase3_tetrads(cube)
-        && edges_in_phase3_groups(cube);
+        && edges_in_phase3_groups(cube)
+        && has_even_corner_parity(cube)
+        && has_even_edge_parity(cube);
+}
+
+bool Thistlethwaite::is_phase_4_solved(const Cubie& cube) const {
+    for (int pos = 0; pos < 8; ++pos) {
+        Corner piece = static_cast<Corner>(cube.corner_perm[pos]);
+        Corner solved_piece = static_cast<Corner>(pos);
+
+        if (piece != solved_piece || cube.corner_ori[pos] != 0)
+            return false;
+    }
+    for (int pos = 0; pos < 12; ++pos) {
+        Edge piece = static_cast<Edge>(cube.edge_perm[pos]);
+        Edge solved_piece = static_cast<Edge>(pos);
+
+        if (piece != solved_piece || cube.edge_ori[pos] != 0)
+            return false;
+    }
+    return true;
 }
 
 size_t Thistlethwaite::get_solution_length() const {
@@ -94,6 +118,10 @@ bool Thistlethwaite::is_phase_2_complete(const Cubie& cube) const {
 
 bool Thistlethwaite::is_phase_3_complete(const Cubie& cube) const {
     return is_phase_3_solved(cube);
+}
+
+bool Thistlethwaite::is_phase_4_complete(const Cubie& cube) const {
+    return is_phase_4_solved(cube);
 }
 
 bool Thistlethwaite::dfs(const Cubie& cube, const PhaseRules& rules, int depth, int limit, std::vector<Move>& path, Move last_move) {
@@ -140,7 +168,7 @@ bool Thistlethwaite::solve_phase(const Cubie& cube, const PhaseRules& rules) {
 }
 
 bool Thistlethwaite::solve(Cubie& cube) {
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 4; ++i) {
 
         size_t path_start = _path.size();
         if (!solve_phase(cube, _phase_rules[i]))
@@ -150,5 +178,5 @@ bool Thistlethwaite::solve(Cubie& cube) {
             apply_move(cube, _path[j]);
         }
     }
-    return true;
+    return is_phase_4_complete(cube);
 }
