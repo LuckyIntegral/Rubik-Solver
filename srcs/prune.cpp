@@ -18,22 +18,24 @@ int Thistlethwaite::encodeCO(const Cubie& cube) const {
     return co;
 }
 
-static int n_choose_k(int n, int k) {
+int Thistlethwaite::binomial(int n, int k) const {
     if (k < 0 || k > n)
         return 0;
-
     if (k == 0 || k == n)
         return 1;
 
-    int result = 1;
-    for (int i = 1; i <= k; ++i) {
-        result = result * (n - k + i) / i;
-    }
-    return result;
+    int res = 1;
+    for (int i = 1; i <= k; ++i)
+        res = res * (n - k + i) / i;
+    return res;
 }
 
 static bool is_e_slice_edge(Edge e) {
     return (e == FR || e == FL || e == BR || e == BL);
+}
+
+static bool is_phase3_group_edge(Edge e) {
+    return (e == UF || e == UB || e == DF || e == DB);
 }
 
 int Thistlethwaite::encodeUDSlice(const Cubie& cube) const {
@@ -42,9 +44,55 @@ int Thistlethwaite::encodeUDSlice(const Cubie& cube) const {
 
     for (int pos = 11; pos >= 0; --pos) {
         if (is_e_slice_edge(static_cast<Edge>(cube.edge_perm[pos]))) {
-            index += n_choose_k(pos, r);
+            index += binomial(pos, r);
             --r;
         }
+    }
+    return index;
+}
+// use lehmer code to encode CP, EP
+// lehmer: count the number of corners/edges that are smaller than the current corner/edge
+static bool is_tetrad_a_corner(Corner c) {
+    return (c == URF || c == ULB || c == DLF || c == DRB);
+}
+
+int Thistlethwaite::encodeReducedCP(const Cubie& cube) const {
+    int index = 0;
+    int r = 4;
+
+    for (int pos = 7; pos >= 0; --pos) {
+        if (is_tetrad_a_corner(static_cast<Corner>(cube.corner_perm[pos]))) {
+            index += binomial(pos, r);
+            --r;
+        }
+        if (r == 0)
+            break;
+    }
+    return index;
+}
+
+static bool is_ud_layer_pos(int pos) {
+    return (pos == UR || pos == UF || pos == UL || pos == UB ||
+            pos == DR || pos == DF || pos == DL || pos == DB);
+}
+
+int Thistlethwaite::encodeReducedEP(const Cubie& cube) const {
+    int index = 0;
+    int r = 4;
+    int k = 7;
+
+    for (int pos = 11; pos >= 0; --pos) {
+        if (!is_ud_layer_pos(pos))
+            continue;
+
+        if (is_phase3_group_edge(static_cast<Edge>(cube.edge_perm[pos]))) {
+            index += binomial(k, r);
+            --r;
+        }
+        --k;
+
+        if (r == 0)
+            break;
     }
     return index;
 }
@@ -125,6 +173,54 @@ void Thistlethwaite::init_uds_prune() {
     }
 }
 
+void Thistlethwaite::init_reduced_cp_prune() {
+    int solved_reduced_cp = encodeReducedCP(_solved_cube);
+    std::queue<Cubie> q;
+    q.push(_solved_cube);
+    _reduced_cp_prune[solved_reduced_cp] = 0;
+
+    while (!q.empty()) {
+        Cubie cube = q.front();
+        q.pop();
+
+        int current_reduced_cp = encodeReducedCP(cube);
+        int current_depth = _reduced_cp_prune[current_reduced_cp];
+
+        for (int i = 0; i < _phase_rules[2].move_count; ++i) {
+            Cubie next = after_move(cube, _phase_rules[2].moves[i]);
+            int next_reduced_cp = encodeReducedCP(next);
+
+            if (_reduced_cp_prune[next_reduced_cp] == -1) {
+                _reduced_cp_prune[next_reduced_cp] = current_depth + 1;
+                q.push(next);
+            }
+        }
+    }
+}
+
+void Thistlethwaite::init_reduced_ep_prune() {
+    int solved_reduced_ep = encodeReducedEP(_solved_cube);
+    std::queue<Cubie> q;
+    q.push(_solved_cube);
+    _reduced_ep_prune[solved_reduced_ep] = 0;
+    while (!q.empty()) {
+        Cubie cube = q.front();
+        q.pop();
+
+        int current_reduced_ep = encodeReducedEP(cube);
+        int current_depth = _reduced_ep_prune[current_reduced_ep];
+        for (int i = 0; i < _phase_rules[2].move_count; ++i) {
+            Cubie next = after_move(cube, _phase_rules[2].moves[i]);
+            int next_reduced_ep = encodeReducedEP(next);
+
+            if (_reduced_ep_prune[next_reduced_ep] == -1) {
+                _reduced_ep_prune[next_reduced_ep] = current_depth + 1;
+                q.push(next);
+            }
+        }
+    }
+}
+
 bool Thistlethwaite::is_pruned() {
     for (int i = 0; i < 2048; ++i) {
         if (_eo_prune[i] == -1) {
@@ -132,13 +228,22 @@ bool Thistlethwaite::is_pruned() {
         }
     }
     for (int i = 0; i < 2187; ++i) {
-
         if (_co_prune[i] == -1) {
             return false;
         }
     }
     for (int i = 0; i < 495; ++i) {
         if (_uds_prune[i] == -1) {
+            return false;
+        }
+    }
+    for (int i = 0; i < 70; ++i) {
+        if (_reduced_cp_prune[i] == -1) {
+            return false;
+        }
+    }
+    for (int i = 0; i < 70; ++i) {
+        if (_reduced_ep_prune[i] == -1) {
             return false;
         }
     }
