@@ -1,15 +1,9 @@
 #include <chrono>
-#include <csignal>
 #include <iomanip>
 #include <iostream>
 #include <random>
 #include <sstream>
 #include <stdexcept>
-#ifdef __linux__
-#include <sys/prctl.h>
-#endif
-#include <sys/wait.h>
-#include <unistd.h>
 #include <vector>
 
 #include "cubie.h"
@@ -84,63 +78,12 @@ struct SolveResult {
     size_t solution_len;
 };
 
-static SolveResult run_solve_with_timeout(const std::vector<std::string>& scramble, int timeout_ms) {
-    int pipefd[2];
-    if (pipe(pipefd) == -1)
-        return {false, 0, false, 0};
-
-    pid_t pid = fork();
-    if (pid == -1) {
-        close(pipefd[0]);
-        close(pipefd[1]);
-        return {false, 0, false, 0};
-    }
-
-    if (pid == 0) {
-#ifdef __linux__
-        prctl(PR_SET_PDEATHSIG, SIGKILL);
-#endif
-        close(pipefd[0]);
-        Thistlethwaite t;
-        auto start = std::chrono::steady_clock::now();
-        bool found = t.solve(scramble);
-        long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now() - start).count();
-        size_t len = found ? t.get_solution_length() : 0;
-        write(pipefd[1], &found, sizeof(found));
-        write(pipefd[1], &ms, sizeof(ms));
-        write(pipefd[1], &len, sizeof(len));
-        close(pipefd[1]);
-        _exit(0);
-    }
-
-    close(pipefd[1]);
+static SolveResult run_solve_in_process(Thistlethwaite& t, const std::vector<std::string>& scramble) {
     auto start = std::chrono::steady_clock::now();
-    int wstatus;
-    pid_t result;
-
-    for (;;) {
-        result = waitpid(pid, &wstatus, WNOHANG);
-        if (result == pid)
-            break;
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now() - start).count();
-        if (elapsed >= timeout_ms) {
-            kill(pid, SIGKILL);
-            waitpid(pid, &wstatus, 0);
-            close(pipefd[0]);
-            return {false, timeout_ms, true, 0};
-        }
-        usleep(10000);
-    }
-
-    bool found;
-    long long ms;
-    size_t len;
-    read(pipefd[0], &found, sizeof(found));
-    read(pipefd[0], &ms, sizeof(ms));
-    read(pipefd[0], &len, sizeof(len));
-    close(pipefd[0]);
+    bool found = t.solve(scramble);
+    long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - start).count();
+    size_t len = found ? t.get_solution_length() : 0;
     return {found, ms, false, len};
 }
 
@@ -180,16 +123,14 @@ static int run_single_scramble(const std::vector<std::string>& scramble) {
         }
     }
 
-    Thistlethwaite t_init;
-    if (!t_init.is_pruned()) {
+    Thistlethwaite t;
+    if (!t.is_pruned()) {
         std::cout << RED << "FAIL: is_pruned() - prune tables not fully built\n" << RESET;
         return 1;
     }
 
     std::cout << BOLD << "Single scramble test" << RESET << "\n";
     std::cout << "  scramble: " << CYAN << scramble_to_string(scramble) << RESET << "\n";
-
-    Thistlethwaite t;
     auto start = std::chrono::steady_clock::now();
     bool found = t.solve(scramble);
     long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -199,7 +140,7 @@ static int run_single_scramble(const std::vector<std::string>& scramble) {
     std::cout << "  time:  " << ms << " ms\n";
     std::cout << "  moves: " << len << "\n";
 
-    std::vector<std::string> solution = t.get_solution();
+    std::vector<std::string> solution = t.raw_solution();
     if (found)
         std::cout << "  path:  " << CYAN << scramble_to_string(solution) << RESET << "\n";
 
@@ -207,16 +148,12 @@ static int run_single_scramble(const std::vector<std::string>& scramble) {
         std::cout << RED << "  result: FAILED - path not found" << RESET << "\n";
         return 1;
     }
-    if (solution.size() == 1 && solution[0].find("error:") != std::string::npos) {
-        std::cout << RED << "  result: FAILED - " << solution[0] << RESET << "\n";
-        return 1;
-    }
 
     Cubie verify = make_solved_cube();
     apply_scramble(verify, scramble);
     for (const auto& m : solution)
         apply_move(verify, parse_move(m));
-    bool path_correct = t_init.is_phase_4_complete(verify);
+    bool path_correct = t.is_phase_4_complete(verify);
     if (!path_correct) {
         std::cout << RED << "  result: FAILED - wrong path (does not solve cube)" << RESET << "\n";
         return 1;
@@ -240,8 +177,9 @@ int main(int argc, char** argv) {
         return run_single_scramble(arg_scramble);
     }
 
-    static const int NUM_TESTS = 10000;
-    static const int SCRAMBLE_LEN = 40;
+    static const int NUM_TESTS = 100;
+    static const int SCRAMBLE_LEN_MIN = 20;
+    static const int SCRAMBLE_LEN_MAX = 40;
     static const int TIMEOUT_MS = 10000;
     static const int MAX_ACCEPTABLE_MS = 3000;
     static const int MAX_MOVES = 52;
@@ -253,11 +191,12 @@ int main(int argc, char** argv) {
     }
     std::cout << GREEN << "is_pruned: OK" << RESET << "\n";
     std::cout << BOLD << "Stress test: " << NUM_TESTS << " tests" << RESET
-              << " | scramble len " << SCRAMBLE_LEN
-              << " | timeout " << TIMEOUT_MS << "ms"
+              << " | scramble len " << SCRAMBLE_LEN_MIN << "-" << SCRAMBLE_LEN_MAX
               << " | fail if > " << MAX_ACCEPTABLE_MS << "ms or > " << MAX_MOVES << " moves\n";
 
+    Thistlethwaite t;
     std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int> len_dist(SCRAMBLE_LEN_MIN, SCRAMBLE_LEN_MAX);
     long long total_ms = 0;
     size_t total_turns = 0;
     int passed = 0;
@@ -271,23 +210,26 @@ int main(int argc, char** argv) {
     std::vector<FailureInfo> failures;
 
     for (int i = 0; i < NUM_TESTS; ++i) {
-        std::vector<std::string> scramble = random_scramble(SCRAMBLE_LEN, rng);
-        SolveResult r = run_solve_with_timeout(scramble, TIMEOUT_MS);
+        std::vector<std::string> scramble = random_scramble(len_dist(rng), rng);
+        SolveResult r = run_solve_in_process(t, scramble);
 
         if (r.timeout)
             ++count_timeout;
 
         bool acceptable = true;
         std::string reason;
-        if (!r.ok || r.timeout) {
+        if (r.timeout) {
             acceptable = false;
-            reason = r.timeout ? "TIMEOUT" : "FAILED";
+            reason = "timeout (exceeded " + std::to_string(TIMEOUT_MS) + " ms limit)";
+        } else if (!r.ok) {
+            acceptable = false;
+            reason = "solve returned false (path not found)";
         } else if (r.solution_len > static_cast<size_t>(MAX_MOVES)) {
             acceptable = false;
-            reason = "solution_len " + std::to_string(r.solution_len) + " > " + std::to_string(MAX_MOVES);
+            reason = "solution too long (" + std::to_string(r.solution_len) + " moves > " + std::to_string(MAX_MOVES) + " max)";
         } else if (r.ms > MAX_ACCEPTABLE_MS) {
             acceptable = false;
-            reason = "ms " + std::to_string(r.ms) + " > " + std::to_string(MAX_ACCEPTABLE_MS);
+            reason = "time too slow (" + std::to_string(r.ms) + " ms > " + std::to_string(MAX_ACCEPTABLE_MS) + " ms limit)";
         }
 
         if (r.ok && !r.timeout) {

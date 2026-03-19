@@ -15,7 +15,7 @@ Thistlethwaite::Thistlethwaite() :
                 _eo_prune(2048, -1), _co_prune(2187, -1), _uds_prune(495, -1), _reduced_cp_prune(70, -1),
                 _reduced_ep_prune(70, -1), _phase3_cp_prune(40320, -1), _phase3_ep_prune(40320, -1),
                 _cp_prune(40320, -1), _ep8_prune(40320, -1), _ep4_prune(24, -1),
-                _current_cube{}, _solved_cube{}, _solution_consumed(true) {
+                _current_cube{}, _solved_cube{} {
     init_solved_cube(_current_cube);
     init_solved_cube(_solved_cube);
     static const Move phase_1_moves[] = {
@@ -147,15 +147,11 @@ void Thistlethwaite::reset_for_next_solve() {
     init_solved_cube(_current_cube);
 }
 
-std::vector<std::string> Thistlethwaite::get_solution() {
-    if (_solution_consumed)
-        return {"error: get_solution called more than once; call solve() first"};
+std::vector<std::string> Thistlethwaite::raw_solution() const {
     std::vector<std::string> out;
     out.reserve(_path.size());
     for (Move m : _path)
         out.push_back(move_to_string(m));
-    reset_for_next_solve();
-    _solution_consumed = true;
     return out;
 }
 
