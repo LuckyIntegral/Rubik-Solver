@@ -1,3 +1,4 @@
+#include <chrono>
 #include <climits>
 
 #include "thistlethwaite.hpp"
@@ -188,6 +189,7 @@ bool Thistlethwaite::solve_phase(const Cubie& cube, const PhaseRules& rules) {
         work = cube;
         int result = dfs(work, rules, 0, limit, path, NOMOVE);
         if (result == -1) {
+            _last_phase_depth = limit;
             _path.insert(_path.end(), path.begin(), path.end());
             return true;
         }
@@ -202,14 +204,25 @@ bool Thistlethwaite::solve(const std::vector<std::string>& scramble_moves) {
     _scramble_sequence = scramble_moves;
     scramble();
 
+    auto total_start = std::chrono::steady_clock::now();
     for (int i = 0; i < 4; ++i) {
         size_t path_start = _path.size();
+        auto phase_start = std::chrono::steady_clock::now();
         if (!solve_phase(_current_cube, _phase_rules[i]))
             return false;
+        auto phase_end = std::chrono::steady_clock::now();
+
+        _telemetry.phases[i].path_start = path_start;
+        _telemetry.phases[i].path_end = _path.size();
+        _telemetry.phases[i].depth_limit = _last_phase_depth;
+        _telemetry.phases[i].ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+            phase_end - phase_start).count();
 
         for (size_t j = path_start; j < _path.size(); ++j) {
             apply_move(_current_cube, _path[j]);
         }
     }
+    _telemetry.total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - total_start).count();
     return is_phase_4_complete(_current_cube);
 }

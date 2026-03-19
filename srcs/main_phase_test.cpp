@@ -167,8 +167,10 @@ static int run_single_scramble(const std::vector<std::string>& scramble) {
     std::cout << "  moves: " << len << "\n";
 
     std::vector<std::string> solution = t.raw_solution();
-    if (found)
+    if (found) {
         std::cout << "  path:  " << CYAN << scramble_to_string(solution) << RESET << "\n";
+        std::cout << "\n" << t.human_solution();
+    }
 
     if (!found) {
         std::cout << RED << "  result: FAILED - path not found" << RESET << "\n";
@@ -204,7 +206,7 @@ int main(int argc, char** argv) {
     }
 
     static const int NUM_TESTS = 100;
-    static const int SCRAMBLE_LEN_MIN = 20;
+    static const int SCRAMBLE_LEN_MIN = 10;
     static const int SCRAMBLE_LEN_MAX = 40;
     static const int TIMEOUT_MS = 10000;
     static const int MAX_ACCEPTABLE_MS = 3000;

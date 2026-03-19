@@ -1,7 +1,22 @@
 #ifndef THISTLETHWAITE_HPP
 #define THISTLETHWAITE_HPP
 
+#include <cstddef>
 #include "cubie.h"
+
+struct PhaseTelemetry {
+    size_t   path_start;
+    size_t   path_end;
+    int      depth_limit;
+    long long ms;
+};
+
+struct SolveTelemetry {
+    long long init_ms;
+    int      tables_created;
+    PhaseTelemetry phases[4];
+    long long total_ms;
+};
 
 class Thistlethwaite {
     private:
@@ -18,6 +33,8 @@ class Thistlethwaite {
         Cubie                       _current_cube;
         Cubie                       _solved_cube;
         PhaseRules                  _phase_rules[4];
+        SolveTelemetry              _telemetry;
+        int                         _last_phase_depth;
 
         void    apply_move(Cubie& cube, Move move);
         void    reset_current_cube_to_solved();
@@ -77,6 +94,7 @@ class Thistlethwaite {
         bool    solve(const std::vector<std::string>& scramble_moves);
         size_t  get_solution_length() const;
         std::vector<std::string> raw_solution() const;
+        std::string human_solution() const;
 
         // testing functions
         bool    is_phase_1_complete(const Cubie& cube) const;
