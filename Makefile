@@ -47,7 +47,6 @@ run		:
 test		:
 		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test \
 			srcs/main_phase_test.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/solver.cpp srcs/heuristics.cpp
-		./test
 
 -include $(DEPS)
 
