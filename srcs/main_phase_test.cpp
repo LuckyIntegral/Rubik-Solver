@@ -101,11 +101,9 @@ static SolveResult run_solve_with_timeout(const std::vector<std::string>& scramb
         prctl(PR_SET_PDEATHSIG, SIGKILL);
 #endif
         close(pipefd[0]);
-        Thistlethwaite t(scramble);
-        Cubie cube = make_solved_cube();
-        apply_scramble(cube, scramble);
+        Thistlethwaite t;
         auto start = std::chrono::steady_clock::now();
-        bool found = t.solve(cube);
+        bool found = t.solve(scramble);
         long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - start).count();
         size_t len = found ? t.get_solution_length() : 0;
@@ -182,7 +180,7 @@ static int run_single_scramble(const std::vector<std::string>& scramble) {
         }
     }
 
-    Thistlethwaite t_init({});
+    Thistlethwaite t_init;
     if (!t_init.is_pruned()) {
         std::cout << RED << "FAIL: is_pruned() - prune tables not fully built\n" << RESET;
         return 1;
@@ -191,28 +189,32 @@ static int run_single_scramble(const std::vector<std::string>& scramble) {
     std::cout << BOLD << "Single scramble test" << RESET << "\n";
     std::cout << "  scramble: " << CYAN << scramble_to_string(scramble) << RESET << "\n";
 
-    Thistlethwaite t(scramble);
-    Cubie cube = make_solved_cube();
-    apply_scramble(cube, scramble);
+    Thistlethwaite t;
     auto start = std::chrono::steady_clock::now();
-    bool found = t.solve(cube);
+    bool found = t.solve(scramble);
     long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::steady_clock::now() - start).count();
     size_t len = found ? t.get_solution_length() : 0;
 
     std::cout << "  time:  " << ms << " ms\n";
     std::cout << "  moves: " << len << "\n";
+
+    std::vector<std::string> solution = t.get_solution();
     if (found)
-        std::cout << "  path:  " << CYAN << scramble_to_string(t.get_solution()) << RESET << "\n";
+        std::cout << "  path:  " << CYAN << scramble_to_string(solution) << RESET << "\n";
 
     if (!found) {
         std::cout << RED << "  result: FAILED - path not found" << RESET << "\n";
         return 1;
     }
+    if (solution.size() == 1 && solution[0].find("error:") != std::string::npos) {
+        std::cout << RED << "  result: FAILED - " << solution[0] << RESET << "\n";
+        return 1;
+    }
 
     Cubie verify = make_solved_cube();
     apply_scramble(verify, scramble);
-    for (const auto& m : t.get_solution())
+    for (const auto& m : solution)
         apply_move(verify, parse_move(m));
     bool path_correct = t_init.is_phase_4_complete(verify);
     if (!path_correct) {
@@ -238,13 +240,13 @@ int main(int argc, char** argv) {
         return run_single_scramble(arg_scramble);
     }
 
-    static const int NUM_TESTS = 100;
+    static const int NUM_TESTS = 10000;
     static const int SCRAMBLE_LEN = 40;
     static const int TIMEOUT_MS = 10000;
     static const int MAX_ACCEPTABLE_MS = 3000;
     static const int MAX_MOVES = 52;
 
-    Thistlethwaite t_init({});
+    Thistlethwaite t_init;
     if (!t_init.is_pruned()) {
         std::cout << RED << "FAIL: is_pruned() - prune tables not fully built\n" << RESET;
         return 1;
