@@ -55,11 +55,13 @@ class Thistlethwaite {
         void    init_ep4_prune();
         void    init_prune();
 
-        int     heuristic_phase_1(const Cubie& cube);
-        int     heuristic_phase_2(const Cubie& cube);
-        int     heuristic_phase_3(const Cubie& cube);
-        int     heuristic_phase_4(const Cubie& cube);
-        
+        int     heuristic_phase_1(const Cubie& cube) const;
+        int     heuristic_phase_2(const Cubie& cube) const;
+        int     heuristic_phase_3(const Cubie& cube) const;
+        int     heuristic_phase_4(const Cubie& cube) const;
+        bool    phase_is_goal(int phase, const Cubie& cube) const;
+        int     phase_heuristic(int phase, const Cubie& cube) const;
+
         bool    is_phase_1_solved(const Cubie& cube) const;
         bool    is_phase_2_solved(const Cubie& cube) const;
         bool    is_phase_3_solved(const Cubie& cube) const;

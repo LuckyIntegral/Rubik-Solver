@@ -7,8 +7,7 @@ static int get_face(Move move) {
     return static_cast<int>(move) / 3;
 }
 
-static bool is_valid_move(Move move, Move last_move, const PhaseRules& rules) {
-    (void)rules;  // Same logic for all phases
+static bool is_valid_move(Move move, Move last_move) {
     int move_face = get_face(move);
     int last_face = get_face(last_move);
 
@@ -128,18 +127,38 @@ bool Thistlethwaite::is_phase_4_complete(const Cubie& cube) const {
     return is_phase_4_solved(cube);
 }
 
+bool Thistlethwaite::phase_is_goal(int phase, const Cubie& cube) const {
+    switch (phase) {
+        case 0: return is_phase_1_solved(cube);
+        case 1: return is_phase_2_solved(cube);
+        case 2: return is_phase_3_solved(cube);
+        case 3: return is_phase_4_solved(cube);
+        default: return false;
+    }
+}
+
+int Thistlethwaite::phase_heuristic(int phase, const Cubie& cube) const {
+    switch (phase) {
+        case 0: return heuristic_phase_1(cube);
+        case 1: return heuristic_phase_2(cube);
+        case 2: return heuristic_phase_3(cube);
+        case 3: return heuristic_phase_4(cube);
+        default: return 0;
+    }
+}
+
 int Thistlethwaite::dfs(Cubie& cube, const PhaseRules& rules, int depth, int limit, std::vector<Move>& path, Move last_move) {
-    if (rules.is_goal(cube))
+    if (phase_is_goal(rules.phase, cube))
         return -1;
 
-    int h = rules.heuristic(cube);
+    int h = phase_heuristic(rules.phase, cube);
     if (depth + h > limit)
         return depth + h;
 
     int min_exceeded = INT_MAX;
     for (int i = 0; i < rules.move_count; ++i) {
         Move move = rules.moves[i];
-        if (!is_valid_move(move, last_move, rules))
+        if (!is_valid_move(move, last_move))
             continue;
 
         apply_move(cube, move);
@@ -160,7 +179,7 @@ int Thistlethwaite::dfs(Cubie& cube, const PhaseRules& rules, int depth, int lim
 }
 
 bool Thistlethwaite::solve_phase(const Cubie& cube, const PhaseRules& rules) {
-    int limit = rules.heuristic(cube);
+    int limit = phase_heuristic(rules.phase, cube);
     std::vector<Move> path;
     Cubie work;
 
@@ -172,7 +191,7 @@ bool Thistlethwaite::solve_phase(const Cubie& cube, const PhaseRules& rules) {
             _path.insert(_path.end(), path.begin(), path.end());
             return true;
         }
-        if (result == 0 || result > 50)
+        if (result == 0)
             return false;
         limit = result;
     }
