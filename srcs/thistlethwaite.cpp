@@ -106,6 +106,25 @@ void Thistlethwaite::scramble() {
     }
 }
 
+static Move parse_move(const std::string& move) {
+    if (move.empty()) throw std::invalid_argument("Empty move");
+    switch (move[0]) {
+        case 'U': return (move.size() > 1 && move[1] == '\'') ? U_PRIME : (move.size() > 1 && move[1] == '2') ? U2 : U;
+        case 'D': return (move.size() > 1 && move[1] == '\'') ? D_PRIME : (move.size() > 1 && move[1] == '2') ? D2 : D;
+        case 'L': return (move.size() > 1 && move[1] == '\'') ? L_PRIME : (move.size() > 1 && move[1] == '2') ? L2 : L;
+        case 'R': return (move.size() > 1 && move[1] == '\'') ? R_PRIME : (move.size() > 1 && move[1] == '2') ? R2 : R;
+        case 'F': return (move.size() > 1 && move[1] == '\'') ? F_PRIME : (move.size() > 1 && move[1] == '2') ? F2 : F;
+        case 'B': return (move.size() > 1 && move[1] == '\'') ? B_PRIME : (move.size() > 1 && move[1] == '2') ? B2 : B;
+        default: throw std::invalid_argument("Invalid move: " + move);
+    }
+}
+
+void Thistlethwaite::apply_path(Cubie& cube, const std::vector<std::string>& path) {
+    for (const auto& m : path) {
+        apply_move(cube, parse_move(m));
+    }
+}
+
 std::string Thistlethwaite::move_to_string(Move move) {
     switch (move) {
         case U: return "U";
@@ -133,7 +152,6 @@ std::string Thistlethwaite::move_to_string(Move move) {
 bool Thistlethwaite::solve(Cubie& cube) {
     if (!solve_phase(cube, _phase_rules[0]))
         return false;
-    std::cout << "Phase 1 solved" << std::endl;
+    apply_path(cube, _path);
     return solve_phase(cube, _phase_rules[1]);
-    return true;
 }

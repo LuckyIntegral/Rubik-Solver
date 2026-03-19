@@ -19,6 +19,7 @@ class Thistlethwaite {
         void    apply_move(Cubie& cube, Move move);
         Cubie   after_move(Cubie const& cube, Move move);
         void    scramble();
+        void    apply_path(Cubie& cube, const std::vector<std::string>& path);
         std::string move_to_string(Move move);
 
         int     encodeEO(const Cubie& cube) const;
