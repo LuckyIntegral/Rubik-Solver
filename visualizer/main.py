@@ -38,6 +38,7 @@ class CubeVisualizer:
     SPEED_STEP_MS = 10
     ROTATE_SENSITIVITY = 0.005
     WHEEL_ZOOM_STEP = 0.5
+    DEMO_YAW_SPEED = 0.6
 
     MANUAL_MOVES = [
         "R", "R'", "R2", "L", "L'", "L2",
@@ -72,6 +73,7 @@ class CubeVisualizer:
         self.algo_options = list(self.ALGO_OPTIONS)
         self.selected_algo = self.algo_options[0]
         self.algo_dropdown_open = False
+        self.demo_mode = False
 
         self.sequence: List[str] = []
         self.scramble_moves: List[str] = []
@@ -317,6 +319,11 @@ class CubeVisualizer:
             self.status_text = "Paused"
             return
 
+        if self.rects["demo"].collidepoint(pos):
+            self.demo_mode = not self.demo_mode
+            self.status_text = "Demo on" if self.demo_mode else "Demo off"
+            return
+
         if self.rects["scramble_only"].collidepoint(pos):
             self.pause_all()
             if self.load_sequence(reset_cube=True):
@@ -514,6 +521,9 @@ class CubeVisualizer:
         self._start_move_animation(inverse, done)
 
     def update(self, delta_time: float):
+        if self.demo_mode:
+            self.renderer.rotate_camera(0.0, self.DEMO_YAW_SPEED * delta_time)
+
         if self.anim is not None:
             self.anim["elapsed"] = float(self.anim["elapsed"]) + delta_time
             progress = min(1.0, float(self.anim["elapsed"]) / max(1e-6, float(self.anim["duration"])))
