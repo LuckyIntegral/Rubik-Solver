@@ -96,12 +96,6 @@ If dependencies change later, run the same command again to sync your environmen
 From project root, with `venv` activated:
 
 ```bash
-python3 -m visualizer
-```
-
-Alternative:
-
-```bash
 python3 visualizer/main.py
 ```
 
