@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <queue>
 
 enum Move {
     U, U2, U_PRIME,
