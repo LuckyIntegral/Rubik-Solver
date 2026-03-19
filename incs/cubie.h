@@ -3,7 +3,6 @@
 
 #include <array>
 #include <cstdint>
-#include <functional>
 #include <stdexcept>
 #include <vector>
 #include <string>
@@ -60,8 +59,6 @@ struct PhaseRules {
     int phase;
     const Move* moves;
     int move_count;
-    std::function<bool(const Cubie&)> is_goal;
-    std::function<int(const Cubie&)> heuristic;
 };
 
 void apply_move(Cubie& cube, Move move);

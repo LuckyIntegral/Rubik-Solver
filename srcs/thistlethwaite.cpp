@@ -43,34 +43,14 @@ Thistlethwaite::Thistlethwaite() :
                                         };
     static const Move phase_4_moves[] = {U2, D2, L2, R2, F2, B2};
 
-    _phase_rules[0] = {
-        .phase = 0,
-        .moves = phase_1_moves,
-        .move_count = sizeof(phase_1_moves) / sizeof(phase_1_moves[0]),
-        .is_goal = [this](const Cubie& c) { return is_phase_1_solved(c); },
-        .heuristic = [this](const Cubie& c) { return heuristic_phase_1(c); }
-    };
-    _phase_rules[1] = {
-        .phase = 1,
-        .moves = phase_2_moves,
-        .move_count = sizeof(phase_2_moves) / sizeof(phase_2_moves[0]),
-        .is_goal = [this](const Cubie& c) { return is_phase_2_solved(c); },
-        .heuristic = [this](const Cubie& c) { return heuristic_phase_2(c); }
-    };
-    _phase_rules[2] = {
-        .phase = 2,
-        .moves = phase_3_moves,
-        .move_count = sizeof(phase_3_moves) / sizeof(phase_3_moves[0]),
-        .is_goal = [this](const Cubie& c) { return is_phase_3_solved(c); },
-        .heuristic = [this](const Cubie& c) { return heuristic_phase_3(c); }
-    };
-    _phase_rules[3] = {
-        .phase = 3,
-        .moves = phase_4_moves,
-        .move_count = sizeof(phase_4_moves) / sizeof(phase_4_moves[0]),
-        .is_goal = [this](const Cubie& c) { return is_phase_4_solved(c); },
-        .heuristic = [this](const Cubie& c) { return heuristic_phase_4(c); }
-    };
+    _phase_rules[0] = { .phase = 0, .moves = phase_1_moves,
+        .move_count = static_cast<int>(sizeof(phase_1_moves) / sizeof(phase_1_moves[0])) };
+    _phase_rules[1] = { .phase = 1, .moves = phase_2_moves,
+        .move_count = static_cast<int>(sizeof(phase_2_moves) / sizeof(phase_2_moves[0])) };
+    _phase_rules[2] = { .phase = 2, .moves = phase_3_moves,
+        .move_count = static_cast<int>(sizeof(phase_3_moves) / sizeof(phase_3_moves[0])) };
+    _phase_rules[3] = { .phase = 3, .moves = phase_4_moves,
+        .move_count = static_cast<int>(sizeof(phase_4_moves) / sizeof(phase_4_moves[0])) };
 
     init_prune();
 }

@@ -1,10 +1,10 @@
 #include "thistlethwaite.hpp"
 
-int Thistlethwaite::heuristic_phase_1(const Cubie& cube) {
+int Thistlethwaite::heuristic_phase_1(const Cubie& cube) const {
     return _eo_prune[encodeEO(cube)];
 }
 
-int Thistlethwaite::heuristic_phase_2(const Cubie& cube) {
+int Thistlethwaite::heuristic_phase_2(const Cubie& cube) const {
     int co = _co_prune[encodeCO(cube)];
     int uds = _uds_prune[encodeUDSlice(cube)];
     if (co < 0 || uds < 0)
@@ -12,7 +12,7 @@ int Thistlethwaite::heuristic_phase_2(const Cubie& cube) {
     return std::max(co, uds);
 }
 
-int Thistlethwaite::heuristic_phase_3(const Cubie& cube) {
+int Thistlethwaite::heuristic_phase_3(const Cubie& cube) const {
     int corner_composite = encodeReducedCP(cube) * 576
         + encodeTetradAPerm(cube) * 24 + encodeTetradBPerm(cube);
     int edge_composite = encodeReducedEP(cube) * 576
@@ -26,7 +26,7 @@ int Thistlethwaite::heuristic_phase_3(const Cubie& cube) {
     return std::max(cp, ep);
 }
 
-int Thistlethwaite::heuristic_phase_4(const Cubie& cube) {
+int Thistlethwaite::heuristic_phase_4(const Cubie& cube) const {
     int cp  = _cp_prune[encodeCP(cube)];
     int ep8 = _ep8_prune[encodeEP8(cube)];
     int ep4 = _ep4_prune[encodeEP4(cube)];
