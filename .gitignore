@@ -1,7 +1,5 @@
 /objs
 test
-test_prune
-test_move
 __pycache__
 test.d
 venv
