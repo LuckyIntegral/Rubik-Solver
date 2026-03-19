@@ -27,7 +27,7 @@ int Thistlethwaite::heuristic_phase_4(const Cubie& cube) {
     int ep4 = _ep4_prune[encodeEP4(cube)];
 
     if (cp < 0 || ep8 < 0 || ep4 < 0)
-        return 0;
+        return 1000;
 
     return std::max(cp, std::max(ep8, ep4));
 }

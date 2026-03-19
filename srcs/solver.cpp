@@ -1,27 +1,26 @@
 #include "thistlethwaite.hpp"
 
-static bool is_valid_move(Move move, Move last_move, const PhaseRules& rules) {
-    int move_group = static_cast<int>(move) / 3;
-    int last_move_group = static_cast<int>(last_move) / 3;
+static int get_face(Move move) {
+    if (move == NOMOVE) return -1;
+    return static_cast<int>(move) / 3;
+}
 
-    if (rules.phase == 0) 
-        return move_group != last_move_group;
-    else if (rules.phase == 1) {
-        if (move > R_PRIME && move != last_move)
-            return true;
-        else
-            return move_group != last_move_group;
-    } else if (rules.phase == 2) {
-        if (move > D_PRIME && move != last_move)
-            return true;
-        else
-            return move_group != last_move_group;
-    }
-    else if (rules.phase == 3) {
-        if (move != last_move)
-            return true;
-    }
-    return false;
+static bool is_valid_move(Move move, Move last_move, const PhaseRules& rules) {
+    (void)rules;  // Same logic for all phases
+    int move_face = get_face(move);
+    int last_face = get_face(last_move);
+
+    if (last_face == -1) return true;  // No previous move
+
+    // Rule 1: Forbid same face twice in a row
+    if (move_face == last_face) return false;
+
+    // Rule 2: Opposite faces on same axis - allow only canonical order (smaller face first)
+    // Pairs (0,1), (2,3), (4,5) are opposite. Allow only last_face < move_face.
+    if ((move_face ^ last_face) == 1)
+        return last_face < move_face;
+
+    return true;
 }
 
 bool Thistlethwaite::is_phase_1_solved(const Cubie& cube) const {
@@ -83,7 +82,10 @@ bool Thistlethwaite::is_phase_3_solved(const Cubie& cube) const {
         && corners_in_phase3_tetrads(cube)
         && edges_in_phase3_groups(cube)
         && has_even_corner_parity(cube)
-        && has_even_edge_parity(cube);
+        && has_even_edge_parity(cube)
+        && _cp_prune[encodeCP(cube)] != -1
+        && _ep8_prune[encodeEP8(cube)] != -1
+        && _ep4_prune[encodeEP4(cube)] != -1;
 }
 
 bool Thistlethwaite::is_phase_4_solved(const Cubie& cube) const {
@@ -176,6 +178,17 @@ bool Thistlethwaite::solve(Cubie& cube) {
 
         for (size_t j = path_start; j < _path.size(); ++j) {
             apply_move(cube, _path[j]);
+        }
+        if (i == 2){
+            int cp_i = encodeCP(cube);
+            int ep8_i = encodeEP8(cube);
+            int ep4_i = encodeEP4(cube);
+            
+            std::cout << "phase4 start: "
+                      << "cp_i=" << cp_i << " cp_h=" << _cp_prune[cp_i]
+                      << " ep8_i=" << ep8_i << " ep8_h=" << _ep8_prune[ep8_i]
+                      << " ep4_i=" << ep4_i << " ep4_h=" << _ep4_prune[ep4_i]
+                      << "\n";
         }
     }
     return is_phase_4_complete(cube);
