@@ -1,6 +1,7 @@
 #include <chrono>
 #include <future>
 #include <iostream>
+#include <random>
 #include <stdexcept>
 #include <vector>
 
@@ -11,7 +12,27 @@ static const char* RESET = "\033[0m";
 static const char* GREEN = "\033[32m";
 static const char* RED = "\033[31m";
 
-static const char* SCRAMBLE_MOVES[] = {"F", "R", "U", "R'", "U'", "F'", "B", "L", "U", "L'"};
+static const char* move_to_str(Move m) {
+    static const char* tbl[] = {"U", "U2", "U'", "D", "D2", "D'", "L", "L2", "L'", "R", "R2", "R'", "F", "F2", "F'", "B", "B2", "B'"};
+    return (m >= U && m <= B_PRIME) ? tbl[static_cast<int>(m)] : "?";
+}
+
+static std::vector<std::string> random_scramble(int len, unsigned seed) {
+    std::mt19937 rng(seed);
+    std::vector<std::string> out;
+    int last_group = -1;
+    for (int i = 0; i < len; ++i) {
+        int group;
+        do {
+            group = rng() % 6;
+        } while (group == last_group);
+        last_group = group;
+        int variant = rng() % 3;
+        Move m = static_cast<Move>(group * 3 + variant);
+        out.push_back(move_to_str(m));
+    }
+    return out;
+}
 
 static Cubie make_solved_cube() {
     Cubie c{};
@@ -78,11 +99,9 @@ int main() {
     }
     std::cout << GREEN << "is_pruned: OK\n" << RESET;
 
-    for (int len = 1; len <= 10; ++len) {
-        std::vector<std::string> scramble;
-        for (int i = 0; i < len; ++i) {
-            scramble.push_back(SCRAMBLE_MOVES[i % 10]);
-        }
+    std::mt19937 seed_rng(std::random_device{}());
+    for (int len = 1; len <= 20; ++len) {
+        std::vector<std::string> scramble = random_scramble(len, seed_rng());
 
         SolveResult r = run_solve_with_timeout(scramble, 2000);
 

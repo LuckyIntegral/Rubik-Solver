@@ -32,12 +32,14 @@ Thistlethwaite::Thistlethwaite(std::vector<std::string> scramble_sequence) :
                                         };
 
     _phase_rules[0] = {
+        .phase = 0,
         .moves = phase_1_moves,
         .move_count = 18,
         .is_goal = [this](const Cubie& c) { return is_phase_1_solved(c); },
         .heuristic = [this](const Cubie& c) { return heuristic_phase_1(c); }
     };
     _phase_rules[1] = {
+        .phase = 1,
         .moves = phase_2_moves,
         .move_count = 14,
         .is_goal = [this](const Cubie& c) { return is_phase_2_solved(c); },
@@ -106,22 +108,9 @@ void Thistlethwaite::scramble() {
     }
 }
 
-static Move parse_move(const std::string& move) {
-    if (move.empty()) throw std::invalid_argument("Empty move");
-    switch (move[0]) {
-        case 'U': return (move.size() > 1 && move[1] == '\'') ? U_PRIME : (move.size() > 1 && move[1] == '2') ? U2 : U;
-        case 'D': return (move.size() > 1 && move[1] == '\'') ? D_PRIME : (move.size() > 1 && move[1] == '2') ? D2 : D;
-        case 'L': return (move.size() > 1 && move[1] == '\'') ? L_PRIME : (move.size() > 1 && move[1] == '2') ? L2 : L;
-        case 'R': return (move.size() > 1 && move[1] == '\'') ? R_PRIME : (move.size() > 1 && move[1] == '2') ? R2 : R;
-        case 'F': return (move.size() > 1 && move[1] == '\'') ? F_PRIME : (move.size() > 1 && move[1] == '2') ? F2 : F;
-        case 'B': return (move.size() > 1 && move[1] == '\'') ? B_PRIME : (move.size() > 1 && move[1] == '2') ? B2 : B;
-        default: throw std::invalid_argument("Invalid move: " + move);
-    }
-}
-
-void Thistlethwaite::apply_path(Cubie& cube, const std::vector<std::string>& path) {
-    for (const auto& m : path) {
-        apply_move(cube, parse_move(m));
+void Thistlethwaite::apply_path(Cubie& cube, const std::vector<Move>& path) {
+    for (Move m : path) {
+        apply_move(cube, m);
     }
 }
 
@@ -147,11 +136,4 @@ std::string Thistlethwaite::move_to_string(Move move) {
         case B_PRIME: return "B'";
         default: return "?";
     }
-}
-
-bool Thistlethwaite::solve(Cubie& cube) {
-    if (!solve_phase(cube, _phase_rules[0]))
-        return false;
-    apply_path(cube, _path);
-    return solve_phase(cube, _phase_rules[1]);
 }

@@ -4,9 +4,9 @@ static bool is_valid_move(Move move, Move last_move, const PhaseRules& rules) {
     int move_group = static_cast<int>(move) / 3;
     int last_move_group = static_cast<int>(last_move) / 3;
 
-    if (rules.move_count == 18) 
+    if (rules.phase == 0) 
         return move_group != last_move_group;
-    else if (rules.move_count == 10) {
+    else if (rules.phase == 1) {
         if (move > D_PRIME && move != last_move)
             return true;
         else
@@ -35,7 +35,7 @@ bool Thistlethwaite::is_phase_2_solved(const Cubie& cube) const {
     return encodeCO(cube) == 0 && encodeUDSlice(cube) == encodeUDSlice(_solved_cube);
 }
 
-bool Thistlethwaite::dfs(const Cubie& cube, const PhaseRules& rules, int depth, int limit, std::vector<std::string>& path, Move last_move) {
+bool Thistlethwaite::dfs(const Cubie& cube, const PhaseRules& rules, int depth, int limit, std::vector<Move>& path, Move last_move) {
     int h = rules.heuristic(cube);
 
     if (rules.is_goal(cube))
@@ -50,7 +50,7 @@ bool Thistlethwaite::dfs(const Cubie& cube, const PhaseRules& rules, int depth, 
         }
         Cubie next = after_move(cube, move);
 
-        path.push_back(move_to_string(move));
+        path.push_back(move);
 
         if (dfs(next, rules, depth + 1, limit, path, move))
             return true;
@@ -72,4 +72,13 @@ bool Thistlethwaite::solve_phase(const Cubie& cube, const PhaseRules& rules) {
         if (limit > 50)
             return false;
     }
+}
+
+bool Thistlethwaite::solve(Cubie& cube) {
+    for (int i = 0; i < 2; ++i) {
+        if (!solve_phase(cube, _phase_rules[i]))
+            return false;
+        apply_path(cube, _path);
+    }
+    return true;
 }
