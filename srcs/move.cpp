@@ -1,4 +1,3 @@
-#include "cubie.h"
 #include "thistlethwaite.hpp"
 
 // Convension: a -> b -> c -> d -> a
