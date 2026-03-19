@@ -20,7 +20,6 @@ class Thistlethwaite {
         Cubie                       _current_cube;
         Cubie                       _solved_cube;
         PhaseRules                  _phase_rules[4];
-        bool                        _solution_consumed;
 
         void    apply_move(Cubie& cube, Move move);
         void    reset_current_cube_to_solved();
@@ -79,7 +78,7 @@ class Thistlethwaite {
 
         bool    solve(const std::vector<std::string>& scramble_moves);
         size_t  get_solution_length() const;
-        std::vector<std::string> get_solution();
+        std::vector<std::string> raw_solution() const;
 
         // testing functions
         bool    is_phase_1_complete(const Cubie& cube) const;
