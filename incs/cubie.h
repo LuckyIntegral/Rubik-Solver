@@ -56,6 +56,7 @@ struct Cubie {
 };
 
 struct PhaseRules {
+    int phase;
     const Move* moves;
     int move_count;
     std::function<bool(const Cubie&)> is_goal;
