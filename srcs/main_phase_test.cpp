@@ -102,7 +102,6 @@ int main() {
     std::mt19937 seed_rng(std::random_device{}());
     for (int len = 1; len <= 20; ++len) {
         std::vector<std::string> scramble = random_scramble(len, seed_rng());
-
         SolveResult r = run_solve_with_timeout(scramble, 2000);
 
         std::cout << "len " << len << ": "
