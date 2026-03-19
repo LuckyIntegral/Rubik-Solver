@@ -34,7 +34,7 @@ clean	:
 		$(RM) $(OBJS_DIR)
 
 fclean	:
-		$(RM) $(OBJS_DIR) $(NAME) test
+		$(RM) $(OBJS_DIR) $(NAME) test test.d
 
 re		:
 		$(RM) $(OBJS_DIR) $(NAME)
@@ -49,12 +49,6 @@ test		:
 			srcs/main_phase_test.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/phase_solver.cpp srcs/heuristics.cpp
 		./test
 
-v		:
-		$(MAKE) visualizer
-
-visualizer	:
-		node --watch --watch-path=server.js --watch-path=visualizer server.js
-
 -include $(DEPS)
 
-.PHONY: all clean fclean bonus re run visualizer v test
+.PHONY: all clean fclean re run test

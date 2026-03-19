@@ -20,9 +20,16 @@ Thistlethwaite::Thistlethwaite(std::vector<std::string> scramble_sequence) :
                                         R, R2, R_PRIME,
                                         F, F2, F_PRIME,
                                         B, B2, B_PRIME};
-    static const Move phase_2_moves[] = {U, U2, U_PRIME,
-                                        D, D2, D_PRIME,
-                                        L2, R2, F2, B2};
+    // static const Move phase_2_moves[] = {U, U2, U_PRIME,
+    //                                     D, D2, D_PRIME,
+    //                                     L2, R2, F2, B2};
+    static const Move phase_2_moves[] = {
+                                            U, U2, U_PRIME,
+                                            D, D2, D_PRIME,
+                                            L, L2, L_PRIME,
+                                            R, R2, R_PRIME,
+                                            F2, B2
+                                        };
 
     _phase_rules[0] = {
         .moves = phase_1_moves,
@@ -32,7 +39,7 @@ Thistlethwaite::Thistlethwaite(std::vector<std::string> scramble_sequence) :
     };
     _phase_rules[1] = {
         .moves = phase_2_moves,
-        .move_count = 10,
+        .move_count = 14,
         .is_goal = [this](const Cubie& c) { return is_phase_2_solved(c); },
         .heuristic = [this](const Cubie& c) { return heuristic_phase_2(c); }
     };
@@ -126,6 +133,7 @@ std::string Thistlethwaite::move_to_string(Move move) {
 bool Thistlethwaite::solve(Cubie& cube) {
     if (!solve_phase(cube, _phase_rules[0]))
         return false;
-    // return solve_phase(cube, _phase_rules[1]);
+    std::cout << "Phase 1 solved" << std::endl;
+    return solve_phase(cube, _phase_rules[1]);
     return true;
 }

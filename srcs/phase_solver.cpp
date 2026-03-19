@@ -43,11 +43,12 @@ bool Thistlethwaite::dfs(const Cubie& cube, const PhaseRules& rules, int depth, 
 
     if (depth + h > limit)
         return false;
-
     for (int i = 0; i < rules.move_count; ++i) {
         Move move = rules.moves[i];
-        if (!is_valid_move(move, last_move, rules))
+        if (!is_valid_move(move, last_move, rules)){
             continue;
+        }
+        std::cout << "-------------Valid move: " << move_to_string(move) << std::endl;
         Cubie next = after_move(cube, move);
 
         path.push_back(move_to_string(move));
@@ -57,6 +58,8 @@ bool Thistlethwaite::dfs(const Cubie& cube, const PhaseRules& rules, int depth, 
 
         path.pop_back();
     }
+    std::cout << "last_move" << move_to_string(last_move) << " Number: " << last_move << std::endl;
+
     return false;
 }
 

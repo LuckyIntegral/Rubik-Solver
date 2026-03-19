@@ -1,5 +1,5 @@
 #include <chrono>
-#include <iomanip>
+#include <future>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -10,12 +10,13 @@
 static const char* RESET = "\033[0m";
 static const char* GREEN = "\033[32m";
 static const char* RED = "\033[31m";
-static const char* YELLOW = "\033[33m";
+
+static const char* SCRAMBLE_MOVES[] = {"F", "R", "U", "R'", "U'", "F'", "B", "L", "U", "L'"};
 
 static Cubie make_solved_cube() {
     Cubie c{};
-    for (int i = 0; i < 8; ++i) { c.corner_perm[i] = i; c.corner_ori[i] = 0; }
-    for (int i = 0; i < 12; ++i) { c.edge_perm[i] = i; c.edge_ori[i] = 0; }
+    for (int i = 0; i < 8; ++i) { c.corner_perm[i] = static_cast<uint8_t>(i); c.corner_ori[i] = 0; }
+    for (int i = 0; i < 12; ++i) { c.edge_perm[i] = static_cast<uint8_t>(i); c.edge_ori[i] = 0; }
     return c;
 }
 
@@ -37,65 +38,62 @@ static void apply_scramble(Cubie& c, const std::vector<std::string>& s) {
     for (const auto& m : s) apply_move(c, parse_move(m));
 }
 
-static bool run_solve(const std::vector<std::string>& scramble, long long* out_ms) {
-    Thistlethwaite t(scramble);
-    Cubie cube = make_solved_cube();
-    apply_scramble(cube, scramble);
-    auto start = std::chrono::steady_clock::now();
-    bool found = t.solve(cube);
-    *out_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::steady_clock::now() - start).count();
-    return found;
+struct SolveResult {
+    bool ok;
+    long long ms;
+    bool timeout;
+    size_t solution_len;
+};
+
+static SolveResult run_solve_with_timeout(const std::vector<std::string>& scramble, int timeout_ms) {
+    auto task = [&scramble]() {
+        Thistlethwaite t(scramble);
+        Cubie cube = make_solved_cube();
+        apply_scramble(cube, scramble);
+        auto start = std::chrono::steady_clock::now();
+        bool found = t.solve(cube);
+        long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - start).count();
+        size_t len = found ? t.get_solution_length() : 0;
+        return std::make_tuple(found, ms, len);
+    };
+
+    auto future = std::async(std::launch::async, task);
+    auto status = future.wait_for(std::chrono::milliseconds(timeout_ms));
+
+    if (status == std::future_status::timeout) {
+        return {false, timeout_ms, true, 0};
+    }
+    auto [found, ms, len] = future.get();
+    return {found, ms, false, len};
 }
 
 int main() {
     bool all_ok = true;
 
-    // --- Easy scrambles: verify termination ---
-    std::vector<std::vector<std::string>> easy = {
-        {"F"},
-        {"F", "R"},
-        {"F", "R", "U"},
-        {"R", "U", "R'", "U'"},
-        {"F", "R", "U", "R'", "U'", "F'"},
-    };
-
-    std::cout << "Easy scrambles:\n";
-    for (const auto& s : easy) {
-        long long ms;
-        bool ok = run_solve(s, &ms);
-        std::cout << "  " << s.size() << " moves: " << (ok ? GREEN : RED) << (ok ? "OK" : "FAIL")
-                  << RESET << " (" << ms << " ms)\n";
-        if (!ok) all_ok = false;
+    Thistlethwaite t_init({});
+    if (!t_init.is_pruned()) {
+        std::cout << RED << "FAIL: is_pruned() - prune tables not fully built\n" << RESET;
+        return 1;
     }
-    std::cout << GREEN << "Easy: successful\n" << RESET;
+    std::cout << GREEN << "is_pruned: OK\n" << RESET;
 
-    // --- Hard scrambles: timed, average printed ---
-    std::vector<std::vector<std::string>> hard = {
-        {"R", "U2", "R'", "U'", "R", "U'", "R'"},
-        {"F", "R", "U", "R'", "U'", "F'", "B", "L", "U", "L'", "U'", "B'"},
-        {"L", "U", "F", "R'", "D2", "B", "U'", "L'"},
-        {"R2", "U", "F2", "D'", "L2", "B", "U2", "R'", "F'"},
-        {"F2", "D'", "R2", "B2", "U", "L2", "F'", "D2", "R'", "B", "U2", "L", "F2", "D", "R2", "B'", "U'", "L2", "F", "D2"},
-        {"R'", "U2", "F", "L2", "D'", "B2", "R", "U'", "F2", "L", "D2", "B'", "R2", "U", "F'", "L2", "D", "B2", "R'", "U2"},
-    };
+    for (int len = 1; len <= 10; ++len) {
+        std::vector<std::string> scramble;
+        for (int i = 0; i < len; ++i) {
+            scramble.push_back(SCRAMBLE_MOVES[i % 10]);
+        }
 
-    std::cout << "\nHard scrambles:\n";
-    long long total_ms = 0;
-    int n = 0;
-    for (const auto& s : hard) {
-        long long ms;
-        bool ok = run_solve(s, &ms);
-        std::cout << "  " << s.size() << " moves: " << (ok ? GREEN : RED) << (ok ? "OK" : "FAIL")
-                  << RESET << " " << ms << " ms\n";
-        if (!ok) all_ok = false;
-        total_ms += ms;
-        n++;
-    }
-    if (n > 0) {
-        double avg = static_cast<double>(total_ms) / n;
-        std::cout << YELLOW << "\nHard average: " << std::fixed << std::setprecision(1)
-                  << avg << " ms (" << n << " scrambles)\n" << RESET;
+        SolveResult r = run_solve_with_timeout(scramble, 2000);
+
+        std::cout << "len " << len << ": "
+                  << (r.ok ? GREEN : RED) << (r.timeout ? "TIMEOUT" : (r.ok ? "OK" : "FAIL"))
+                  << RESET << " " << r.ms << " ms";
+        if (r.ok)
+            std::cout << " solution_len " << r.solution_len;
+        std::cout << "\n";
+
+        if (!r.ok) all_ok = false;
     }
 
     std::cout << "\n" << (all_ok ? GREEN : RED) << (all_ok ? "All passed" : "Some failed") << RESET << "\n";

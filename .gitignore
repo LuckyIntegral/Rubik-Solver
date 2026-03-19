@@ -4,7 +4,6 @@ test_prune
 test_move
 __pycache__
 venv
-rubik
 
 # Prerequisites
 *.d
