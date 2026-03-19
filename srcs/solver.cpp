@@ -179,17 +179,6 @@ bool Thistlethwaite::solve(Cubie& cube) {
         for (size_t j = path_start; j < _path.size(); ++j) {
             apply_move(cube, _path[j]);
         }
-        if (i == 2){
-            int cp_i = encodeCP(cube);
-            int ep8_i = encodeEP8(cube);
-            int ep4_i = encodeEP4(cube);
-            
-            std::cout << "phase4 start: "
-                      << "cp_i=" << cp_i << " cp_h=" << _cp_prune[cp_i]
-                      << " ep8_i=" << ep8_i << " ep8_h=" << _ep8_prune[ep8_i]
-                      << " ep4_i=" << ep4_i << " ep4_h=" << _ep4_prune[ep4_i]
-                      << "\n";
-        }
     }
     return is_phase_4_complete(cube);
 }

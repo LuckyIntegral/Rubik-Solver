@@ -3,7 +3,8 @@
 Thistlethwaite::Thistlethwaite(std::vector<std::string> scramble_sequence) :
                 _scramble_sequence(scramble_sequence),
                 _eo_prune(2048, -1), _co_prune(2187, -1), _uds_prune(495, -1), _reduced_cp_prune(70, -1),
-                _reduced_ep_prune(70, -1), _cp_prune(40320, -1), _ep8_prune(40320, -1), _ep4_prune(24, -1),
+                _reduced_ep_prune(70, -1), _phase3_cp_prune(40320, -1), _phase3_ep_prune(40320, -1),
+                _cp_prune(40320, -1), _ep8_prune(40320, -1), _ep4_prune(24, -1),
                 _current_cube{}, _solved_cube{} {
     for (int i = 0; i < 8; ++i) {
         _current_cube.corner_perm[i] = static_cast<uint8_t>(i);

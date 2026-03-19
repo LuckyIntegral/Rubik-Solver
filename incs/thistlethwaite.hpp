@@ -12,6 +12,8 @@ class Thistlethwaite {
         std::vector<int>            _uds_prune;
         std::vector<int>            _reduced_cp_prune;
         std::vector<int>            _reduced_ep_prune;
+        std::vector<int>            _phase3_cp_prune;
+        std::vector<int>            _phase3_ep_prune;
         std::vector<int>            _cp_prune;
         std::vector<int>            _ep8_prune;
         std::vector<int>            _ep4_prune;
@@ -36,6 +38,10 @@ class Thistlethwaite {
         bool    has_even_edge_parity(const Cubie& cube) const;
         int     encodeReducedCP(const Cubie& cube) const;
         int     encodeReducedEP(const Cubie& cube) const;
+        int     encodeTetradAPerm(const Cubie& cube) const;
+        int     encodeTetradBPerm(const Cubie& cube) const;
+        int     encodeUDFBPerm(const Cubie& cube) const;
+        int     encodeUDRLPerm(const Cubie& cube) const;
         int     encodeCP(const Cubie& cube) const;
         int     encodeEP8(const Cubie& cube) const;
         int     encodeEP4(const Cubie& cube) const;
@@ -46,6 +52,8 @@ class Thistlethwaite {
         void    init_uds_prune();
         void    init_reduced_cp_prune();
         void    init_reduced_ep_prune();
+        void    init_phase3_cp_prune();
+        void    init_phase3_ep_prune();
         void    init_cp_prune();
         void    init_ep8_prune();
         void    init_ep4_prune();

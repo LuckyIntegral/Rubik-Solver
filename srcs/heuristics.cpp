@@ -13,8 +13,13 @@ int Thistlethwaite::heuristic_phase_2(const Cubie& cube) {
 }
 
 int Thistlethwaite::heuristic_phase_3(const Cubie& cube) {
-    int cp = _reduced_cp_prune[encodeReducedCP(cube)];
-    int ep = _reduced_ep_prune[encodeReducedEP(cube)];
+    int corner_composite = encodeReducedCP(cube) * 576
+        + encodeTetradAPerm(cube) * 24 + encodeTetradBPerm(cube);
+    int edge_composite = encodeReducedEP(cube) * 576
+        + encodeUDFBPerm(cube) * 24 + encodeUDRLPerm(cube);
+
+    int cp = _phase3_cp_prune[corner_composite];
+    int ep = _phase3_ep_prune[edge_composite];
 
     if (cp < 0 || ep < 0)
         return 0;
