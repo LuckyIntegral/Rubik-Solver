@@ -1,3 +1,5 @@
+#include <climits>
+
 #include "thistlethwaite.hpp"
 
 static int get_face(Move move) {
@@ -126,30 +128,32 @@ bool Thistlethwaite::is_phase_4_complete(const Cubie& cube) const {
     return is_phase_4_solved(cube);
 }
 
-bool Thistlethwaite::dfs(const Cubie& cube, const PhaseRules& rules, int depth, int limit, std::vector<Move>& path, Move last_move) {
-    int h = rules.heuristic(cube);
-
+int Thistlethwaite::dfs(const Cubie& cube, const PhaseRules& rules, int depth, int limit, std::vector<Move>& path, Move last_move) {
     if (rules.is_goal(cube))
-        return true;
+        return -1;
 
+    int h = rules.heuristic(cube);
     if (depth + h > limit)
-        return false;
+        return depth + h;
+
+    int min_exceeded = INT_MAX;
     for (int i = 0; i < rules.move_count; ++i) {
         Move move = rules.moves[i];
-        if (!is_valid_move(move, last_move, rules)){
+        if (!is_valid_move(move, last_move, rules))
             continue;
-        }
-        Cubie next = after_move(cube, move);
 
+        Cubie next = after_move(cube, move);
         path.push_back(move);
 
-        if (dfs(next, rules, depth + 1, limit, path, move))
-            return true;
+        int result = dfs(next, rules, depth + 1, limit, path, move);
+        if (result == -1)
+            return -1;
+        if (result > 0 && result < min_exceeded)
+            min_exceeded = result;
 
         path.pop_back();
     }
-
-    return false;
+    return (min_exceeded == INT_MAX) ? 0 : min_exceeded;
 }
 
 bool Thistlethwaite::solve_phase(const Cubie& cube, const PhaseRules& rules) {
@@ -158,14 +162,14 @@ bool Thistlethwaite::solve_phase(const Cubie& cube, const PhaseRules& rules) {
 
     while (true) {
         path.clear();
-        if (dfs(cube, rules, 0, limit, path, NOMOVE)) {
+        int result = dfs(cube, rules, 0, limit, path, NOMOVE);
+        if (result == -1) {
             _path.insert(_path.end(), path.begin(), path.end());
             return true;
         }
-
-        ++limit;
-        if (limit > 50)
+        if (result == 0 || result > 50)
             return false;
+        limit = result;
     }
 }
 

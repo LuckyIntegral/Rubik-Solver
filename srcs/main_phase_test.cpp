@@ -177,7 +177,7 @@ int main(int argc, char** argv) {
         return run_single_scramble(arg_scramble);
     }
 
-    static const int NUM_TESTS = 100;
+    static const int NUM_TESTS = 400;
     static const int SCRAMBLE_LEN_MIN = 20;
     static const int SCRAMBLE_LEN_MAX = 40;
     static const int TIMEOUT_MS = 10000;

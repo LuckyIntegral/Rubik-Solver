@@ -78,54 +78,6 @@ void Thistlethwaite::init_uds_prune() {
     }
 }
 
-void Thistlethwaite::init_reduced_cp_prune() {
-    int solved_reduced_cp = encodeReducedCP(_solved_cube);
-    std::queue<Cubie> q;
-    q.push(_solved_cube);
-    _reduced_cp_prune[solved_reduced_cp] = 0;
-
-    while (!q.empty()) {
-        Cubie cube = q.front();
-        q.pop();
-
-        int current_reduced_cp = encodeReducedCP(cube);
-        int current_depth = _reduced_cp_prune[current_reduced_cp];
-
-        for (int i = 0; i < _phase_rules[2].move_count; ++i) {
-            Cubie next = after_move(cube, _phase_rules[2].moves[i]);
-            int next_reduced_cp = encodeReducedCP(next);
-
-            if (_reduced_cp_prune[next_reduced_cp] == -1) {
-                _reduced_cp_prune[next_reduced_cp] = current_depth + 1;
-                q.push(next);
-            }
-        }
-    }
-}
-
-void Thistlethwaite::init_reduced_ep_prune() {
-    int solved_reduced_ep = encodeReducedEP(_solved_cube);
-    std::queue<Cubie> q;
-    q.push(_solved_cube);
-    _reduced_ep_prune[solved_reduced_ep] = 0;
-    while (!q.empty()) {
-        Cubie cube = q.front();
-        q.pop();
-
-        int current_reduced_ep = encodeReducedEP(cube);
-        int current_depth = _reduced_ep_prune[current_reduced_ep];
-        for (int i = 0; i < _phase_rules[2].move_count; ++i) {
-            Cubie next = after_move(cube, _phase_rules[2].moves[i]);
-            int next_reduced_ep = encodeReducedEP(next);
-
-            if (_reduced_ep_prune[next_reduced_ep] == -1) {
-                _reduced_ep_prune[next_reduced_ep] = current_depth + 1;
-                q.push(next);
-            }
-        }
-    }
-}
-
 void Thistlethwaite::init_phase3_cp_prune() {
     int solved_composite = encodeReducedCP(_solved_cube) * 576
         + encodeTetradAPerm(_solved_cube) * 24 + encodeTetradBPerm(_solved_cube);
@@ -256,8 +208,6 @@ void Thistlethwaite::init_prune() {
     init_eo_prune();
     init_co_prune();
     init_uds_prune();
-    init_reduced_cp_prune();
-    init_reduced_ep_prune();
     init_phase3_cp_prune();
     init_phase3_ep_prune();
     init_cp_prune();
@@ -278,16 +228,6 @@ bool Thistlethwaite::is_pruned() {
     }
     for (int i = 0; i < 495; ++i) {
         if (_uds_prune[i] == -1) {
-            return false;
-        }
-    }
-    for (int i = 0; i < 70; ++i) {
-        if (_reduced_cp_prune[i] == -1) {
-            return false;
-        }
-    }
-    for (int i = 0; i < 70; ++i) {
-        if (_reduced_ep_prune[i] == -1) {
             return false;
         }
     }
