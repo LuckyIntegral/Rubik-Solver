@@ -59,6 +59,9 @@ def setup_ui_rects(app):
     app.rects["pause"] = pygame.Rect(margin + half_w + margin, y, half_w, btn_h)
     y += btn_h + gap
 
+    app.rects["demo"] = pygame.Rect(margin, y, app.panel_width - margin * 2, btn_h)
+    y += btn_h + gap
+
     app.rects["scramble_only"] = pygame.Rect(margin, y, half_w, btn_h)
     app.rects["solve_only"] = pygame.Rect(margin + half_w + margin, y, half_w, btn_h)
     y += btn_h + gap
@@ -138,7 +141,7 @@ def draw_input(app, surface, label, key, rect, text):
 
 
 def draw_speed_slider(app, surface):
-    label = app._fonts["label"].render("Move speed", True, (178, 184, 205))
+    label = app._fonts["label"].render("Animation timeframe", True, (178, 184, 205))
     track = app.rects["speed_track"]
     surface.blit(label, (track.left, track.top - 20))
 
@@ -297,6 +300,14 @@ def render(app):
     draw_button(app, panel, app.rects["step"], "Step", enabled=(not app.busy and app.seq_index < len(app.sequence)))
     draw_button(app, panel, app.rects["play"], "Play", enabled=(not app.busy and bool(app.sequence)), accent=True)
     draw_button(app, panel, app.rects["pause"], "Pause", enabled=(not app.busy and app.playing))
+    draw_button(
+        app,
+        panel,
+        app.rects["demo"],
+        "Demo",
+        enabled=True,
+        accent=app.demo_mode,
+    )
     draw_button(
         app,
         panel,
