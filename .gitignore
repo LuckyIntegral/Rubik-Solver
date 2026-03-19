@@ -1,5 +1,7 @@
 /objs
 test
+test_huge
+test_human
 __pycache__
 test.d
 venv

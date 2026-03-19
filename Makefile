@@ -34,7 +34,7 @@ clean	:
 		$(RM) $(OBJS_DIR)
 
 fclean	:
-		$(RM) $(OBJS_DIR) $(NAME) test test.d
+		$(RM) $(OBJS_DIR) $(NAME) test test.d test_human
 
 re		:
 		$(RM) $(OBJS_DIR) $(NAME)
@@ -48,6 +48,10 @@ test		:
 		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test \
 			srcs/main_phase_test.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/solver.cpp srcs/heuristics.cpp srcs/encode_tables.cpp
 
+test_human	:
+		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test_human \
+			srcs/test_human.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/solver.cpp srcs/heuristics.cpp srcs/encode_tables.cpp
+
 -include $(DEPS)
 
-.PHONY: all clean fclean re run test
+.PHONY: all clean fclean re run test test_human
