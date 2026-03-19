@@ -1,5 +1,14 @@
 """Rubik's cube move definitions and parsing."""
 
+from typing import List, TypedDict
+
+
+class MoveParams(TypedDict):
+    axis: str
+    layer: int
+    direction: int
+    turns: int
+
 VALID_MOVES = {
     'R', 'L', 'U', 'D', 'F', 'B',
     "R'", "L'", "U'", "D'", "F'", "B'",
@@ -26,7 +35,7 @@ FACE_COLORS = {
 }
 
 
-def parse_moves(raw: str) -> list:
+def parse_moves(raw: str) -> List[str]:
     """Parse a move sequence string into a list of valid moves.
 
     Args:
@@ -64,7 +73,7 @@ def invert_move(move: str) -> str:
     return f"{move}'"
 
 
-def get_move_params(move: str) -> dict:
+def get_move_params(move: str) -> MoveParams:
     """ Get parameters for applying a move """
     base = move[0]
     turns = 2 if move.endswith('2') else 1
