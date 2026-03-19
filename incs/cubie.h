@@ -66,5 +66,9 @@ struct PhaseRules {
 
 void apply_move(Cubie& cube, Move move);
 Cubie after_move(Cubie const& cube, Move move);
+Move inverse_move(Move move);
+
+bool operator==(const Cubie& a, const Cubie& b);
+bool operator!=(const Cubie& a, const Cubie& b);
 
 #endif

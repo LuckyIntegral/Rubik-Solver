@@ -65,7 +65,7 @@ class Thistlethwaite {
         bool    is_phase_3_solved(const Cubie& cube) const;
         bool    is_phase_4_solved(const Cubie& cube) const;
         
-        int     dfs(const Cubie& cube, const PhaseRules& rules, int depth, int limit, std::vector<Move>& path, Move last_move);
+        int     dfs(Cubie& cube, const PhaseRules& rules, int depth, int limit, std::vector<Move>& path, Move last_move);
         bool    solve_phase(const Cubie& cube, const PhaseRules& rules);
 
     public:
@@ -81,7 +81,6 @@ class Thistlethwaite {
         bool    is_phase_2_complete(const Cubie& cube) const;
         bool    is_phase_3_complete(const Cubie& cube) const;
         bool    is_phase_4_complete(const Cubie& cube) const;
-        bool    is_pruned();
 };
 
 #endif

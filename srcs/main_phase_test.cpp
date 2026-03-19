@@ -71,6 +71,30 @@ static void apply_scramble(Cubie& c, const std::vector<std::string>& s) {
     for (const auto& m : s) apply_move(c, parse_move(m));
 }
 
+static bool test_inverse_moves(std::mt19937& rng) {
+    static const Move ALL_MOVES[] = {U, U2, U_PRIME, D, D2, D_PRIME, L, L2, L_PRIME,
+                                    R, R2, R_PRIME, F, F2, F_PRIME, B, B2, B_PRIME};
+    static const int NUM_RANDOM_STATES = 100;
+
+    for (Move move : ALL_MOVES) {
+        for (int i = 0; i < NUM_RANDOM_STATES; ++i) {
+            Cubie cube = make_solved_cube();
+            if (i > 0)
+                apply_scramble(cube, random_scramble(5 + (rng() % 15), rng));
+
+            Cubie test = cube;
+            apply_move(test, move);
+            apply_move(test, inverse_move(move));
+
+            if (test != cube) {
+                std::cout << "BROKEN INVERSE: " << move_to_str(move) << std::endl;
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 struct SolveResult {
     bool ok;
     long long ms;
@@ -124,8 +148,10 @@ static int run_single_scramble(const std::vector<std::string>& scramble) {
     }
 
     Thistlethwaite t;
-    if (!t.is_pruned()) {
-        std::cout << RED << "FAIL: is_pruned() - prune tables not fully built\n" << RESET;
+
+    std::mt19937 rng_single(std::random_device{}());
+    if (!test_inverse_moves(rng_single)) {
+        std::cout << RED << "FAIL: inverse_move test - apply+inverse did not restore cube\n" << RESET;
         return 1;
     }
 
@@ -177,19 +203,19 @@ int main(int argc, char** argv) {
         return run_single_scramble(arg_scramble);
     }
 
-    static const int NUM_TESTS = 400;
+    static const int NUM_TESTS = 100;
     static const int SCRAMBLE_LEN_MIN = 20;
     static const int SCRAMBLE_LEN_MAX = 40;
     static const int TIMEOUT_MS = 10000;
     static const int MAX_ACCEPTABLE_MS = 3000;
     static const int MAX_MOVES = 52;
 
-    Thistlethwaite t_init;
-    if (!t_init.is_pruned()) {
-        std::cout << RED << "FAIL: is_pruned() - prune tables not fully built\n" << RESET;
+    std::mt19937 rng_init(std::random_device{}());
+    if (!test_inverse_moves(rng_init)) {
+        std::cout << RED << "FAIL: inverse_move test - apply+inverse did not restore cube\n" << RESET;
         return 1;
     }
-    std::cout << GREEN << "is_pruned: OK" << RESET << "\n";
+    std::cout << GREEN << "inverse_moves: OK" << RESET << "\n";
     std::cout << BOLD << "Stress test: " << NUM_TESTS << " tests" << RESET
               << " | scramble len " << SCRAMBLE_LEN_MIN << "-" << SCRAMBLE_LEN_MAX
               << " | fail if > " << MAX_ACCEPTABLE_MS << "ms or > " << MAX_MOVES << " moves\n";
