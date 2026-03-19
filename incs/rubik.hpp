@@ -11,7 +11,16 @@ const std::array<std::string, 18> VALID_MOVES = {
     "R",  "L",  "U",  "D",  "F",  "B",  "R'", "L'", "U'",
     "D'", "F'", "B'", "R2", "L2", "U2", "D2", "F2", "B2"};
 
-const std::vector<std::string> parse_moves(const std::string& moves_str);
-const std::vector<std::string> solve(const std::vector<std::string>& moves);
+extern const char* const kAlgorithmA;
+extern const char* const kAlgorithmB;
+extern const std::array<const char*, 2> kSupportedAlgorithms;
+
+struct SolverCliInput {
+    std::vector<std::string> moves;
+    std::string algorithm;
+};
+
+const SolverCliInput parse_solver_cli_args(int argc, char* argv[]);
+const std::vector<std::string> solve(const std::vector<std::string>& moves, const std::string& algorithm);
 
 #endif  // RUBIK_HPP
