@@ -1,10 +1,13 @@
 #include <chrono>
+#include <csignal>
 #include <iomanip>
 #include <iostream>
 #include <random>
 #include <sstream>
-#include <string>
 #include <stdexcept>
+#ifdef __linux__
+#include <sys/prctl.h>
+#endif
 #include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
@@ -94,6 +97,9 @@ static SolveResult run_solve_with_timeout(const std::vector<std::string>& scramb
     }
 
     if (pid == 0) {
+#ifdef __linux__
+        prctl(PR_SET_PDEATHSIG, SIGKILL);
+#endif
         close(pipefd[0]);
         Thistlethwaite t(scramble);
         Cubie cube = make_solved_cube();
@@ -281,8 +287,18 @@ int main(int argc, char** argv) {
             failures.push_back({i + 1, scramble, reason, r.ms, r.solution_len});
         }
 
-        int pct = ((i + 1) * 100) / NUM_TESTS;
-        std::cout << "\r  " << CYAN << (i + 1) << "/" << NUM_TESTS << RESET << " (" << pct << "%)" << std::flush;
+        int done = i + 1;
+        int pct = (done * 100) / NUM_TESTS;
+        const int bar_width = 32;
+        int filled = (done * bar_width) / NUM_TESTS;
+        std::cout << "\r  " << CYAN << "[" << RESET;
+        for (int j = 0; j < bar_width; ++j) {
+            if (j < filled)
+                std::cout << GREEN << "\u2588" << RESET;
+            else
+                std::cout << "\u2591";
+        }
+        std::cout << CYAN << "] " << RESET << BOLD << done << "/" << NUM_TESTS << RESET << " " << pct << "%" << std::flush;
     }
 
     std::cout << "\n\n" << BOLD << "Summary" << RESET << "\n";
