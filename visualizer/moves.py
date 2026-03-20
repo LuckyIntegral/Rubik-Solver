@@ -16,12 +16,16 @@ VALID_MOVES = {
 }
 
 MOVE_DEF = {
-    'R': {'axis': 'x', 'layer': 1, 'base_dir': 1},
-    'L': {'axis': 'x', 'layer': -1, 'base_dir': -1},
-    'U': {'axis': 'y', 'layer': 1, 'base_dir': 1},
-    'D': {'axis': 'y', 'layer': -1, 'base_dir': -1},
-    'F': {'axis': 'z', 'layer': 1, 'base_dir': -1},
-    'B': {'axis': 'z', 'layer': -1, 'base_dir': 1},
+    # base_dir signs are chosen to match the solver's move convention
+    # (so that e.g. "U" corresponds to the same rotation direction
+    # as the C++ solver's `apply_move`). Flip signs if notation
+    # appears inverted in the UI.
+    'R': {'axis': 'x', 'layer': 1, 'base_dir': -1},
+    'L': {'axis': 'x', 'layer': -1, 'base_dir': 1},
+    'U': {'axis': 'y', 'layer': 1, 'base_dir': -1},
+    'D': {'axis': 'y', 'layer': -1, 'base_dir': 1},
+    'F': {'axis': 'z', 'layer': 1, 'base_dir': 1},
+    'B': {'axis': 'z', 'layer': -1, 'base_dir': -1},
 }
 
 # Face colors (RGB)
