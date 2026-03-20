@@ -4,12 +4,41 @@
 
 #include "thistlethwaite.hpp"
 
-static std::uint64_t pack_phase4_tt_key(int cp, int ep8, int ep4, int rem) {
+namespace {
+
+std::uint64_t pack_phase4_tt_key(int cp, int ep8, int ep4, int rem) {
     return (static_cast<std::uint64_t>(static_cast<unsigned>(cp)) & 0xFFFFu)
         | ((static_cast<std::uint64_t>(static_cast<unsigned>(ep8)) & 0xFFFFu) << 16)
         | ((static_cast<std::uint64_t>(static_cast<unsigned>(ep4)) & 0xFFu) << 32)
         | ((static_cast<std::uint64_t>(static_cast<unsigned>(rem)) & 0xFFFFu) << 40);
 }
+
+}  // namespace
+
+// --- Phase 4 transposition cache (per IDS iteration; key = CP, EP8, EP4, depth_remaining) ---
+
+std::uint64_t Thistlethwaite::phase4_transposition_key(const Cubie& cube, int limit, int depth) const {
+    int rem = limit - depth;
+    return pack_phase4_tt_key(encodeCP(cube), encodeEP8(cube), encodeEP4(cube), rem);
+}
+
+bool Thistlethwaite::phase4_transposition_lookup(std::uint64_t key, int& result) const {
+    auto it = _phase4_tt.find(key);
+    if (it == _phase4_tt.end())
+        return false;
+    result = it->second;
+    return true;
+}
+
+void Thistlethwaite::phase4_transposition_store(std::uint64_t key, int result) {
+    _phase4_tt[key] = result;
+}
+
+void Thistlethwaite::phase4_transposition_clear() {
+    _phase4_tt.clear();
+}
+
+// --- DFS ---
 
 static int get_face(Move move) {
     if (move == NOMOVE) return -1;
@@ -160,21 +189,20 @@ int Thistlethwaite::dfs(Cubie& cube, const PhaseRules& rules, int depth, int lim
     if (phase_is_goal(rules.phase, cube))
         return -1;
 
-    const bool use_phase4_tt = (rules.phase == 3);
-    std::uint64_t tt_key = 0;
-    if (use_phase4_tt) {
-        int rem = limit - depth;
-        tt_key = pack_phase4_tt_key(encodeCP(cube), encodeEP8(cube), encodeEP4(cube), rem);
-        auto found = _phase4_tt.find(tt_key);
-        if (found != _phase4_tt.end())
-            return found->second;
+    const bool phase4_cache = (rules.phase == 3);
+    std::uint64_t p4_key = 0;
+    if (phase4_cache) {
+        p4_key = phase4_transposition_key(cube, limit, depth);
+        int cached = 0;
+        if (phase4_transposition_lookup(p4_key, cached))
+            return cached;
     }
 
     int h = phase_heuristic(rules.phase, cube);
     if (depth + h > limit) {
         int ret = depth + h;
-        if (use_phase4_tt)
-            _phase4_tt[tt_key] = ret;
+        if (phase4_cache)
+            phase4_transposition_store(p4_key, ret);
         return ret;
     }
 
@@ -190,8 +218,8 @@ int Thistlethwaite::dfs(Cubie& cube, const PhaseRules& rules, int depth, int lim
         int result = dfs(cube, rules, depth + 1, limit, path, move);
         if (result == -1) {
             apply_move(cube, inverse_move(move));
-            if (use_phase4_tt)
-                _phase4_tt[tt_key] = -1;
+            if (phase4_cache)
+                phase4_transposition_store(p4_key, -1);
             return -1;
         }
         if (result > 0 && result < min_exceeded)
@@ -201,8 +229,8 @@ int Thistlethwaite::dfs(Cubie& cube, const PhaseRules& rules, int depth, int lim
         apply_move(cube, inverse_move(move));
     }
     int ret = (min_exceeded == INT_MAX) ? 0 : min_exceeded;
-    if (use_phase4_tt)
-        _phase4_tt[tt_key] = ret;
+    if (phase4_cache)
+        phase4_transposition_store(p4_key, ret);
     return ret;
 }
 
@@ -215,7 +243,7 @@ bool Thistlethwaite::solve_phase(const Cubie& cube, const PhaseRules& rules) {
         path.clear();
         work = cube;
         if (rules.phase == 3)
-            _phase4_tt.clear();
+            phase4_transposition_clear();
         int result = dfs(work, rules, 0, limit, path, NOMOVE);
         if (result == -1) {
             _last_phase_depth = limit;
