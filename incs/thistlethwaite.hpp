@@ -11,6 +11,8 @@ struct PhaseTelemetry {
     size_t   path_end;
     int      depth_limit;
     long long ms;
+    int      time_units;
+    int      space_units;
 };
 
 struct SolveTelemetry {
@@ -37,6 +39,7 @@ class Thistlethwaite {
         PhaseRules                  _phase_rules[4];
         SolveTelemetry              _telemetry;
         int                         _last_phase_depth;
+        int                         _perf_depth_peak;
         std::unordered_map<std::uint64_t, int> _phase4_tt;
 
         void    apply_move(Cubie& cube, Move move);
@@ -103,6 +106,7 @@ class Thistlethwaite {
         size_t  get_solution_length() const;
         std::vector<std::string> raw_solution() const;
         std::string human_solution() const;
+        std::string performance_solution() const;
 
         // testing functions
         bool    is_phase_1_complete(const Cubie& cube) const;

@@ -1,7 +1,7 @@
 /objs
 test
 test_huge
-test_human
+test_performance
 __pycache__
 test.d
 venv
