@@ -87,7 +87,6 @@ class Thistlethwaite {
         bool    is_phase_3_solved(const Cubie& cube) const;
         bool    is_phase_4_solved(const Cubie& cube) const;
 
-        // Phase 4 only: transposition table cleared each IDS iteration (see solver.cpp).
         std::uint64_t phase4_transposition_key(const Cubie& cube, int limit, int depth) const;
         bool          phase4_transposition_lookup(std::uint64_t key, int& result) const;
         void          phase4_transposition_store(std::uint64_t key, int result);
