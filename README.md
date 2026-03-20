@@ -51,10 +51,18 @@ Moves-only mode:
 ./rubik "R U R' U'"
 ```
 
-Optionally print a human-readable solution (stdout) using `--human` or `-p`:
+Human-readable explanation and moves (`--human` or `-h`):
 
 ```bash
 ./rubik --human "R U R' U'"
+./rubik -h "R U R' U'"
+```
+
+Performance metrics and full move list (`--performance` or `-p`):
+
+```bash
+./rubik --performance "R U R' U'"
+./rubik -p "R U R' U'"
 ```
 
 Notes:

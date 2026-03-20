@@ -30,22 +30,30 @@ static const std::vector<std::string> parse_moves(const std::string& moves_str) 
     return moves;
 }
 
+enum class PrintMode { Raw, Human, Performance };
+
 int main(int argc, char* argv[]) {
     try {
-        bool print_human = false;
+        PrintMode mode = PrintMode::Raw;
         std::string moves_arg;
 
         if (argc != 2 && argc != 3) {
-            std::cerr << "Usage: " << argv[0] << " [--human|-p] \"<moves>\"\n";
+            std::cerr << "Usage: " << argv[0]
+                      << " [--human|-h|--performance|-p] \"<moves>\"\n";
             return 1;
         }
 
         if (argc == 3) {
-            if (std::string(argv[1]) != "--human" && std::string(argv[1]) != "-p") {
-                std::cerr << "Usage: " << argv[0] << " [--human|-p] \"<moves>\"\n";
+            const std::string flag(argv[1]);
+            if (flag == "--human" || flag == "-h") {
+                mode = PrintMode::Human;
+            } else if (flag == "--performance" || flag == "-p") {
+                mode = PrintMode::Performance;
+            } else {
+                std::cerr << "Usage: " << argv[0]
+                          << " [--human|-h|--performance|-p] \"<moves>\"\n";
                 return 1;
             }
-            print_human = true;
         }
 
         moves_arg = argv[argc - 1];
@@ -59,13 +67,19 @@ int main(int argc, char* argv[]) {
         Thistlethwaite solver;
         solver.solve(valid_moves);
 
-        if (print_human) {
-            std::cout << solver.human_solution() << std::endl;
-        } else {
-            const std::vector<std::string> solution = solver.raw_solution();
-
-            for (const auto& move : solution) {
-                std::cout << move << std::endl;
+        switch (mode) {
+            case PrintMode::Human:
+                std::cout << solver.human_solution() << std::endl;
+                break;
+            case PrintMode::Performance:
+                std::cout << solver.performance_solution() << std::endl;
+                break;
+            case PrintMode::Raw: {
+                const std::vector<std::string> solution = solver.raw_solution();
+                for (const auto& move : solution) {
+                    std::cout << move << std::endl;
+                }
+                break;
             }
         }
     } catch (const std::exception& ex) {
