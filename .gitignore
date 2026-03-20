@@ -5,6 +5,7 @@ test_human
 __pycache__
 test.d
 venv
+rubik
 
 # Prerequisites
 *.d

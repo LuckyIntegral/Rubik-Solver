@@ -69,8 +69,7 @@ def setup_ui_rects(app):
     app.rects["run_solver"] = pygame.Rect(margin, y, app.panel_width - margin * 2, btn_h)
     y += btn_h + gap
 
-    app.rects["algo_dropdown"] = pygame.Rect(margin, y, app.panel_width - margin * 2, btn_h)
-    y += btn_h + 16
+    # algorithm dropdown removed
 
     app.rects["speed_track"] = pygame.Rect(margin, y + 18, app.panel_width - margin * 2 - 90, 10)
     app.rects["speed_label"] = pygame.Rect(app.rects["speed_track"].right + 10, y + 7, 82, 22)
@@ -90,10 +89,6 @@ def setup_ui_rects(app):
 
     app.rects["status"] = pygame.Rect(margin, y, app.panel_width - margin * 2, app.height - y - margin)
 
-
-def algo_option_rect(app, idx: int) -> pygame.Rect:
-    base = app.rects["algo_dropdown"]
-    return pygame.Rect(base.left, base.bottom + 4 + idx * (base.height + 2), base.width, base.height)
 
 
 def draw_button(app, surface, rect, text, enabled=True, accent=False):
@@ -175,30 +170,7 @@ def draw_manual_grid(app, surface):
         draw_button(app, surface, rect, move, enabled=not app.busy)
 
 
-def draw_algo_dropdown(app, surface):
-    rect = app.rects["algo_dropdown"]
-
-    fill = (34, 37, 52) if app.algo_dropdown_open else (26, 28, 39)
-    border = (122, 138, 210) if app.algo_dropdown_open else (88, 95, 132)
-    pygame.draw.rect(surface, fill, rect, border_radius=10)
-    pygame.draw.rect(surface, border, rect, 1, border_radius=10)
-
-    selected = app._fonts["mono"].render(app.selected_algo, True, (232, 235, 245))
-    arrow = app._fonts["mono"].render("v" if not app.algo_dropdown_open else "^", True, (182, 192, 220))
-    surface.blit(selected, (rect.left + 10, rect.centery - selected.get_height() // 2))
-    surface.blit(arrow, (rect.right - 18, rect.centery - arrow.get_height() // 2))
-
-    if not app.algo_dropdown_open:
-        return
-
-    for idx, algo in enumerate(app.algo_options):
-        option_rect = algo_option_rect(app, idx)
-        hovered = option_rect.collidepoint(pygame.mouse.get_pos())
-        option_fill = (54, 58, 82) if hovered else (42, 45, 64)
-        pygame.draw.rect(surface, option_fill, option_rect, border_radius=8)
-        pygame.draw.rect(surface, (88, 95, 132), option_rect, 1, border_radius=8)
-        opt = app._fonts["mono"].render(algo, True, (224, 228, 242))
-        surface.blit(opt, (option_rect.left + 10, option_rect.centery - opt.get_height() // 2))
+# algorithm dropdown UI removed
 
 
 def draw_status(app, surface):
@@ -334,7 +306,6 @@ def render(app):
     draw_speed_slider(app, panel)
     draw_manual_grid(app, panel)
     draw_status(app, panel)
-    draw_algo_dropdown(app, panel)
 
     app.screen.blit(panel, app.panel_rect.topleft)
     pygame.draw.rect(app.screen, COLOR_PANEL_BORDER, app.panel_rect, 1)
