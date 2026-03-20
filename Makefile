@@ -45,6 +45,9 @@ run		:
 		$(MAKE) re
 		./$(NAME)
 
+v		:
+		python3 visualizer/main.py
+
 test		:
 		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test \
 			srcs/main_phase_test.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/solver.cpp srcs/heuristics.cpp srcs/encode_tables.cpp
