@@ -4,16 +4,22 @@
 
 CXX			= g++
 RM			= rm -rf
-# Override on the command line, e.g. make OPTFLAGS="-O3 -DNDEBUG -march=native"
 OPTFLAGS	= -O3 -DNDEBUG
-CXXFLAGS	= -Wall -Wextra -Werror -MD -MP $(OPTFLAGS)
+CXXFLAGS	= -Wall -Wextra -Werror -MD -MP -g $(OPTFLAGS)
 MAKEFLAGS	= -j$(nproc) --no-print-directory
 INCLUDES	= -I incs/
 
 NAME		= rubik
 
 SRCS_DIR	= srcs
-SRCS		= $(filter-out $(SRCS_DIR)/main_%_test.cpp,$(wildcard $(SRCS_DIR)/*.cpp))
+SRCS		= $(SRCS_DIR)/thistlethwaite.cpp \
+		$(SRCS_DIR)/move.cpp \
+		$(SRCS_DIR)/prune.cpp \
+		$(SRCS_DIR)/solver.cpp \
+		$(SRCS_DIR)/heuristics.cpp \
+		$(SRCS_DIR)/encode_tables.cpp \
+		$(SRCS_DIR)/main.cpp
+
 
 OBJS_DIR	= objs
 OBJS		= $(addprefix $(OBJS_DIR)/, $(SRCS:${SRCS_DIR}/%.cpp=%.o))

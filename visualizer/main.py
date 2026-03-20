@@ -30,7 +30,7 @@ class AnimationState(TypedDict):
 class CubeVisualizer:
     """Desktop Rubik's Cube visualizer with UI controls and playback."""
 
-    ALGO_OPTIONS = ("algoA", "algoB")
+    # Algorithm selection removed — solver is invoked with moves only
     SCRAMBLE_FACES = ("R", "L", "U", "D", "F", "B")
     SCRAMBLE_SUFFIXES = ("", "'", "2")
     SPEED_MIN_MS = 80
@@ -70,9 +70,7 @@ class CubeVisualizer:
         self.last_exec_time_ms: Optional[float] = None
         self.last_exec_input = ""
         self.scramble_len_text = "20"
-        self.algo_options = list(self.ALGO_OPTIONS)
-        self.selected_algo = self.algo_options[0]
-        self.algo_dropdown_open = False
+        # removed algo dropdown state
         self.demo_mode = False
 
         self.sequence: List[str] = []
@@ -258,18 +256,7 @@ class CubeVisualizer:
         return not self.busy
 
     def _handle_panel_click(self, pos):
-        if self.rects["algo_dropdown"].collidepoint(pos):
-            self.algo_dropdown_open = not self.algo_dropdown_open
-            return
-
-        if self.algo_dropdown_open:
-            for idx, algo in enumerate(self.algo_options):
-                if self._algo_option_rect(idx).collidepoint(pos):
-                    self.selected_algo = algo
-                    self.algo_dropdown_open = False
-                    self.status_text = f"Algorithm: {algo}"
-                    return
-            self.algo_dropdown_open = False
+        # algo dropdown removed
 
         if self.rects["scramble_input"].collidepoint(pos):
             self.active_input = "scramble"
@@ -486,7 +473,7 @@ class CubeVisualizer:
         }
 
     def _build_solver_command(self, solver_path: Path, move_text: str) -> List[str]:
-        return [str(solver_path), "-a", self.selected_algo, move_text]
+        return [str(solver_path), move_text]
 
     def _after_manual_move(self, move: str) -> Callable[[], None]:
         def done():
@@ -568,10 +555,10 @@ class CubeVisualizer:
         ui.draw_manual_grid(self, surface)
 
     def _algo_option_rect(self, idx: int) -> pygame.Rect:
-        return ui.algo_option_rect(self, idx)
+        raise RuntimeError("algorithm UI removed")
 
     def _draw_algo_dropdown(self, surface):
-        ui.draw_algo_dropdown(self, surface)
+        pass
 
     def _draw_status(self, surface):
         ui.draw_status(self, surface)

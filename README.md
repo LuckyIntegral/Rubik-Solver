@@ -3,12 +3,14 @@
 Rubik Solver is a C++ command-line solver with a Python desktop visualizer built with pygame.
 
 The repository includes:
+
 - A C++ binary named `rubik` that parses a scramble and prints a solution sequence.
 - A Python visualizer (`visualizer/`) that renders the cube in 3D, runs the solver, and animates moves.
 
 ## Project Overview
 
 Main parts:
+
 - `srcs/`, `incs/`: C++ solver source and headers.
 - `visualizer/`: Python frontend (pygame UI and 3D scene rendering).
 - `requirements.txt`: Python dependencies.
@@ -49,16 +51,15 @@ Moves-only mode:
 ./rubik "R U R' U'"
 ```
 
-Algorithm-select mode:
+Optionally print a human-readable solution (stdout) using `--human` or `-p`:
 
 ```bash
-./rubik -a algoA "R U R' U'"
-./rubik -a algoB "R U R' U'"
+./rubik --human "R U R' U'"
 ```
 
 Notes:
+
 - The executable name is not counted as an argument.
-- Supported algorithm names are currently `algoA` and `algoB`.
 - Moves must be space-separated and use standard notation (`R`, `U'`, `F2`, ...).
 
 ## Python Environment (venv)
@@ -102,13 +103,14 @@ python3 visualizer/main.py
 ## Visualizer Usage
 
 Main workflow:
+
 1. Enter scramble moves in the scramble input.
 2. Optionally set scramble length and click `Generate scramble`.
-3. Choose algorithm in the algorithm dropdown (`algoA` or `algoB`).
-4. Click `Run ./rubik` to call the C++ solver.
-5. Use `Load sequence`, `Play`, `Step`, `Back`, `Scramble only`, and `Solve only` for playback.
+3. Click `Run ./rubik` to call the C++ solver.
+4. Use `Load sequence`, `Play`, `Step`, `Back`, `Scramble only`, and `Solve only` for playback.
 
 Controls:
+
 - Mouse drag on canvas: rotate camera
 - Mouse wheel: zoom
 - `SPACE`: play/pause
@@ -120,13 +122,17 @@ Controls:
 ## Troubleshooting
 
 `./rubik: No such file or directory`
+
 - Build first with `make`.
 
 `Solver is not executable`
+
 - Run `chmod +x ./rubik`.
 
 `No module named pygame` (or similar)
+
 - Activate `venv` and run `pip install -r requirements.txt`.
 
 `Invalid move: ...`
+
 - Check notation and spacing in the move sequence.
