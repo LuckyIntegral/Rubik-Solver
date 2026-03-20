@@ -186,6 +186,10 @@ int Thistlethwaite::phase_heuristic(int phase, const Cubie& cube) const {
 }
 
 int Thistlethwaite::dfs(Cubie& cube, const PhaseRules& rules, int depth, int limit, std::vector<Move>& path, Move last_move) {
+    if (depth > _perf_depth_peak) {
+        _perf_depth_peak = depth;
+        ++_telemetry.phases[rules.phase].space_units;
+    }
     if (phase_is_goal(rules.phase, cube))
         return -1;
 
@@ -239,9 +243,11 @@ bool Thistlethwaite::solve_phase(const Cubie& cube, const PhaseRules& rules) {
     std::vector<Move> path;
     Cubie work;
 
+    _perf_depth_peak = -1;
     while (true) {
         path.clear();
         work = cube;
+        ++_telemetry.phases[rules.phase].time_units;
         if (rules.phase == 3)
             phase4_transposition_clear();
         int result = dfs(work, rules, 0, limit, path, NOMOVE);

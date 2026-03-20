@@ -1,4 +1,3 @@
-#include <chrono>
 #include <iostream>
 #include <random>
 #include <sstream>
@@ -52,19 +51,14 @@ int main() {
     std::cout << scramble_to_string(scramble) << "\n\n";
 
     Thistlethwaite t;
-    auto start = std::chrono::steady_clock::now();
     bool found = t.solve(scramble);
-    long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::steady_clock::now() - start).count();
 
     if (!found) {
         std::cout << "FAILED: solver did not find a solution.\n";
         return 1;
     }
 
-    std::cout << "Solve time: " << ms << " ms\n";
-    std::cout << "Solution length: " << t.get_solution_length() << " moves\n\n";
-    std::cout << t.human_solution();
+    std::cout << t.performance_solution();
 
     return 0;
 }
