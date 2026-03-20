@@ -195,11 +195,25 @@ std::string Thistlethwaite::human_solution() const {
     };
 
     for (int i = 0; i < 4; ++i) {
+        const PhaseTelemetry& p = _telemetry.phases[i];
         oss << BOLD << BLUE << "Phase " << i << " " << RESET << "(" << CYAN << PHASE_GROUP[i]
             << RESET << ") " << YELLOW << PHASE_LABEL[i] << RESET << "\n";
-        oss << DIM << "  " << PHASE_DESC[i] << RESET << "\n\n";
+        oss << DIM << "  " << PHASE_DESC[i] << RESET << "\n";
+        oss << "  " << DIM << "Moves:" << RESET << " ";
+        for (size_t j = p.path_start; j < p.path_end && j < _path.size(); ++j) {
+            if (j > p.path_start) oss << " ";
+            oss << GREEN << move_to_str(_path[j]) << RESET;
+        }
+        oss << "\n\n";
     }
 
+    oss << DIM << "──────────────────────────────────────" << RESET << "\n";
+    oss << DIM << "Full sequence: " << RESET;
+    for (size_t i = 0; i < _path.size(); ++i) {
+        if (i > 0) oss << " ";
+        oss << CYAN << move_to_str(_path[i]) << RESET;
+    }
+    oss << "\n";
     return oss.str();
 }
 
