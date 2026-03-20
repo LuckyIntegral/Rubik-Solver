@@ -4,7 +4,9 @@
 
 CXX			= g++
 RM			= rm -rf
-CXXFLAGS	= -Wall -Wextra -Werror -MD -MP -g
+# Override on the command line, e.g. make OPTFLAGS="-O3 -DNDEBUG -march=native"
+OPTFLAGS	= -O3 -DNDEBUG
+CXXFLAGS	= -Wall -Wextra -Werror -MD -MP $(OPTFLAGS)
 MAKEFLAGS	= -j$(nproc) --no-print-directory
 INCLUDES	= -I incs/
 
