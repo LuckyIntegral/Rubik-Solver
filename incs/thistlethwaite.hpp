@@ -2,6 +2,8 @@
 #define THISTLETHWAITE_HPP
 
 #include <cstddef>
+#include <cstdint>
+#include <unordered_map>
 #include "cubie.h"
 
 struct PhaseTelemetry {
@@ -35,6 +37,7 @@ class Thistlethwaite {
         PhaseRules                  _phase_rules[4];
         SolveTelemetry              _telemetry;
         int                         _last_phase_depth;
+        std::unordered_map<std::uint64_t, int> _phase4_tt;
 
         void    apply_move(Cubie& cube, Move move);
         void    reset_current_cube_to_solved();
