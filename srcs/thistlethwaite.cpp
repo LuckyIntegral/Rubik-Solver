@@ -148,6 +148,7 @@ void Thistlethwaite::reset_current_cube_to_solved() {
 
 void Thistlethwaite::reset_for_next_solve() {
     _path.clear();
+    _phase4_tt.clear();
     _scramble_sequence.clear();
     init_solved_cube(_current_cube);
     for (int i = 0; i < 4; ++i) {

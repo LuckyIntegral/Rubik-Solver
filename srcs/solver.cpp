@@ -1,7 +1,15 @@
 #include <chrono>
 #include <climits>
+#include <cstdint>
 
 #include "thistlethwaite.hpp"
+
+static std::uint64_t pack_phase4_tt_key(int cp, int ep8, int ep4, int rem) {
+    return (static_cast<std::uint64_t>(static_cast<unsigned>(cp)) & 0xFFFFu)
+        | ((static_cast<std::uint64_t>(static_cast<unsigned>(ep8)) & 0xFFFFu) << 16)
+        | ((static_cast<std::uint64_t>(static_cast<unsigned>(ep4)) & 0xFFu) << 32)
+        | ((static_cast<std::uint64_t>(static_cast<unsigned>(rem)) & 0xFFFFu) << 40);
+}
 
 static int get_face(Move move) {
     if (move == NOMOVE) return -1;
@@ -152,9 +160,23 @@ int Thistlethwaite::dfs(Cubie& cube, const PhaseRules& rules, int depth, int lim
     if (phase_is_goal(rules.phase, cube))
         return -1;
 
+    const bool use_phase4_tt = (rules.phase == 3);
+    std::uint64_t tt_key = 0;
+    if (use_phase4_tt) {
+        int rem = limit - depth;
+        tt_key = pack_phase4_tt_key(encodeCP(cube), encodeEP8(cube), encodeEP4(cube), rem);
+        auto found = _phase4_tt.find(tt_key);
+        if (found != _phase4_tt.end())
+            return found->second;
+    }
+
     int h = phase_heuristic(rules.phase, cube);
-    if (depth + h > limit)
-        return depth + h;
+    if (depth + h > limit) {
+        int ret = depth + h;
+        if (use_phase4_tt)
+            _phase4_tt[tt_key] = ret;
+        return ret;
+    }
 
     int min_exceeded = INT_MAX;
     for (int i = 0; i < rules.move_count; ++i) {
@@ -168,6 +190,8 @@ int Thistlethwaite::dfs(Cubie& cube, const PhaseRules& rules, int depth, int lim
         int result = dfs(cube, rules, depth + 1, limit, path, move);
         if (result == -1) {
             apply_move(cube, inverse_move(move));
+            if (use_phase4_tt)
+                _phase4_tt[tt_key] = -1;
             return -1;
         }
         if (result > 0 && result < min_exceeded)
@@ -176,7 +200,10 @@ int Thistlethwaite::dfs(Cubie& cube, const PhaseRules& rules, int depth, int lim
         path.pop_back();
         apply_move(cube, inverse_move(move));
     }
-    return (min_exceeded == INT_MAX) ? 0 : min_exceeded;
+    int ret = (min_exceeded == INT_MAX) ? 0 : min_exceeded;
+    if (use_phase4_tt)
+        _phase4_tt[tt_key] = ret;
+    return ret;
 }
 
 bool Thistlethwaite::solve_phase(const Cubie& cube, const PhaseRules& rules) {
@@ -187,6 +214,8 @@ bool Thistlethwaite::solve_phase(const Cubie& cube, const PhaseRules& rules) {
     while (true) {
         path.clear();
         work = cube;
+        if (rules.phase == 3)
+            _phase4_tt.clear();
         int result = dfs(work, rules, 0, limit, path, NOMOVE);
         if (result == -1) {
             _last_phase_depth = limit;
