@@ -11,7 +11,7 @@ INCLUDES	= -I incs/
 NAME		= rubik
 
 SRCS_DIR	= srcs
-SRCS		= $(wildcard $(SRCS_DIR)/*.cpp)
+SRCS		= $(filter-out $(SRCS_DIR)/main_%_test.cpp,$(wildcard $(SRCS_DIR)/*.cpp))
 
 OBJS_DIR	= objs
 OBJS		= $(addprefix $(OBJS_DIR)/, $(SRCS:${SRCS_DIR}/%.cpp=%.o))
@@ -34,7 +34,7 @@ clean	:
 		$(RM) $(OBJS_DIR)
 
 fclean	:
-		$(RM) $(OBJS_DIR) $(NAME)
+		$(RM) $(OBJS_DIR) $(NAME) test test.d test_human
 
 re		:
 		$(RM) $(OBJS_DIR) $(NAME)
@@ -44,12 +44,14 @@ run		:
 		$(MAKE) re
 		./$(NAME)
 
-v		:
-		$(MAKE) visualizer
+test		:
+		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test \
+			srcs/main_phase_test.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/solver.cpp srcs/heuristics.cpp srcs/encode_tables.cpp
 
-visualizer	:
-		node --watch --watch-path=server.js --watch-path=visualizer server.js
+test_human	:
+		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test_human \
+			srcs/test_human.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/solver.cpp srcs/heuristics.cpp srcs/encode_tables.cpp
 
 -include $(DEPS)
 
-.PHONY: all clean fclean bonus re run visualizer v
+.PHONY: all clean fclean re run test test_human
