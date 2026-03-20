@@ -36,7 +36,8 @@ Thistlethwaite::Thistlethwaite() :
                 _eo_prune(2048, -1), _co_prune(2187, -1), _uds_prune(495, -1),
                 _phase3_cp_prune(40320, -1), _phase3_ep_prune(40320, -1),
                 _cp_prune(40320, -1), _ep8_prune(40320, -1), _ep4_prune(24, -1),
-                _current_cube{}, _solved_cube{}, _telemetry{}, _last_phase_depth(0) {
+                _current_cube{}, _solved_cube{}, _telemetry{}, _last_phase_depth(0),
+                _perf_depth_peak(-1) {
     init_solved_cube(_current_cube);
     init_solved_cube(_solved_cube);
     static const Move phase_1_moves[] = {
@@ -171,9 +172,8 @@ std::string Thistlethwaite::human_solution() const {
     oss << BOLD << MAGENTA << "║  Rubik Solver (Thistlethwaite Algorithm) ║" << RESET << "\n";
     oss << BOLD << MAGENTA << "╚══════════════════════════════════════════╝" << RESET << "\n\n";
 
-    oss << DIM << "Setup:" << RESET << " Prune tables built in " << CYAN << _telemetry.init_ms
-        << RESET << " ms (" << YELLOW << _telemetry.tables_created << RESET
-        << " tables for IDA* heuristics)\n\n";
+    oss << DIM << "Thistlethwaite reduces the cube in four subgroup phases (G0→G1→G2→G3→G4)."
+        << RESET << " Each phase restricts moves so the next smaller group is reachable.\n\n";
 
     static const char* const PHASE_DESC[] = {
         "Orient all 12 edges so each can be solved with half-turns only.",
@@ -195,25 +195,53 @@ std::string Thistlethwaite::human_solution() const {
     };
 
     for (int i = 0; i < 4; ++i) {
-        const PhaseTelemetry& p = _telemetry.phases[i];
-        size_t moves_count = p.path_end - p.path_start;
         oss << BOLD << BLUE << "Phase " << i << " " << RESET << "(" << CYAN << PHASE_GROUP[i]
             << RESET << ") " << YELLOW << PHASE_LABEL[i] << RESET << "\n";
-        oss << DIM << "  " << PHASE_DESC[i] << RESET << "\n";
-        oss << "  " << DIM << "Time:" << RESET << " " << CYAN << p.ms << RESET << " ms  "
-            << DIM << "Depth:" << RESET << " " << YELLOW << p.depth_limit << RESET
-            << "  " << DIM << "Moves:" << RESET << " " << GREEN << moves_count << RESET << "\n";
-        oss << "  ";
-        for (size_t j = p.path_start; j < p.path_end && j < _path.size(); ++j) {
-            if (j > p.path_start) oss << " ";
-            oss << GREEN << move_to_str(_path[j]) << RESET;
-        }
-        oss << "\n\n";
+        oss << DIM << "  " << PHASE_DESC[i] << RESET << "\n\n";
+    }
+
+    return oss.str();
+}
+
+std::string Thistlethwaite::performance_solution() const {
+    std::ostringstream oss;
+    oss << BOLD << CYAN << "╔══════════════════════════════════════════╗" << RESET << "\n";
+    oss << BOLD << CYAN << "║            Performance (metrics)           ║" << RESET << "\n";
+    oss << BOLD << CYAN << "╚══════════════════════════════════════════╝" << RESET << "\n\n";
+
+    oss << DIM << "Setup:" << RESET << " prune tables " << CYAN << _telemetry.init_ms << RESET
+        << " ms, " << YELLOW << _telemetry.tables_created << RESET << " tables\n\n";
+
+    oss << DIM << "Search-cost counters:" << RESET << "\n";
+    oss << "  " << DIM << "Time units" << RESET << " — +1 per IDA* outer iteration in that phase.\n";
+    oss << "  " << DIM << "Space units" << RESET << " — +1 each time DFS reaches a new max depth"
+        << " in that phase.\n";
+    oss << "  " << DIM << "Proxies for effort, not formal O() bounds.\n\n" << RESET;
+
+    static const char* const PHASE_TAG[] = {"G0→G1", "G1→G2", "G2→G3", "G3→G4"};
+
+    int sum_time_units = 0;
+    int sum_space_units = 0;
+    for (int i = 0; i < 4; ++i) {
+        const PhaseTelemetry& p = _telemetry.phases[i];
+        sum_time_units += p.time_units;
+        sum_space_units += p.space_units;
+        size_t moves_count = p.path_end - p.path_start;
+        oss << BOLD << BLUE << "Phase " << i << RESET << " " << DIM << "(" << PHASE_TAG[i] << ")"
+            << RESET << "\n";
+        oss << "  " << DIM << "wall time:" << RESET << " " << CYAN << p.ms << RESET << " ms  "
+            << DIM << "depth limit:" << RESET << " " << YELLOW << p.depth_limit << RESET << "  "
+            << DIM << "moves:" << RESET << " " << GREEN << moves_count << RESET << "\n";
+        oss << "  " << DIM << "time units:" << RESET << " " << MAGENTA << p.time_units
+            << RESET << "  " << DIM << "space units:" << RESET << " " << MAGENTA << p.space_units
+            << "\n\n";
     }
 
     oss << DIM << "──────────────────────────────────────" << RESET << "\n";
-    oss << BOLD << "Total: " << CYAN << _telemetry.total_ms << RESET << " ms  "
-        << BOLD << "Solution: " << GREEN << _path.size() << RESET << " moves\n";
+    oss << BOLD << "Total wall time: " << CYAN << _telemetry.total_ms << RESET << " ms  "
+        << BOLD << "solution length: " << GREEN << _path.size() << RESET << " moves\n";
+    oss << BOLD << "Sum time units: " << MAGENTA << sum_time_units << RESET << "  "
+        << BOLD << "sum space units: " << MAGENTA << sum_space_units << RESET << "\n";
     oss << DIM << "Full sequence: " << RESET;
     for (size_t i = 0; i < _path.size(); ++i) {
         if (i > 0) oss << " ";

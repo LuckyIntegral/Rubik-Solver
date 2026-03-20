@@ -4,22 +4,15 @@
 
 CXX			= g++
 RM			= rm -rf
-OPTFLAGS	= -O3 -DNDEBUG
-CXXFLAGS	= -Wall -Wextra -Werror -MD -MP -g $(OPTFLAGS)
+OPTFLAGS	= -O3 -DNDEBUG -march=native
+CXXFLAGS	= -Wall -Wextra -Werror -MD -MP $(OPTFLAGS)
 MAKEFLAGS	= -j$(nproc) --no-print-directory
 INCLUDES	= -I incs/
 
 NAME		= rubik
 
 SRCS_DIR	= srcs
-SRCS		= $(SRCS_DIR)/thistlethwaite.cpp \
-		$(SRCS_DIR)/move.cpp \
-		$(SRCS_DIR)/prune.cpp \
-		$(SRCS_DIR)/solver.cpp \
-		$(SRCS_DIR)/heuristics.cpp \
-		$(SRCS_DIR)/encode_tables.cpp \
-		$(SRCS_DIR)/main.cpp
-
+SRCS		= $(filter-out $(SRCS_DIR)/main_%_test.cpp $(SRCS_DIR)/test_performance.cpp,$(wildcard $(SRCS_DIR)/*.cpp))
 
 OBJS_DIR	= objs
 OBJS		= $(addprefix $(OBJS_DIR)/, $(SRCS:${SRCS_DIR}/%.cpp=%.o))
@@ -42,7 +35,7 @@ clean	:
 		$(RM) $(OBJS_DIR)
 
 fclean	:
-		$(RM) $(OBJS_DIR) $(NAME) test test.d test_human
+		$(RM) $(OBJS_DIR) $(NAME) test test.d test_performance
 
 re		:
 		$(RM) $(OBJS_DIR) $(NAME)
@@ -56,10 +49,10 @@ test		:
 		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test \
 			srcs/main_phase_test.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/solver.cpp srcs/heuristics.cpp srcs/encode_tables.cpp
 
-test_human	:
-		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test_human \
-			srcs/test_human.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/solver.cpp srcs/heuristics.cpp srcs/encode_tables.cpp
+test_performance	:
+		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test_performance \
+			srcs/test_performance.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/solver.cpp srcs/heuristics.cpp srcs/encode_tables.cpp
 
 -include $(DEPS)
 
-.PHONY: all clean fclean re run test test_human
+.PHONY: all clean fclean re run test test_performance
