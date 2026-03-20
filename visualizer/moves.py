@@ -24,8 +24,8 @@ MOVE_DEF = {
     'L': {'axis': 'x', 'layer': -1, 'base_dir': 1},
     'U': {'axis': 'y', 'layer': 1, 'base_dir': -1},
     'D': {'axis': 'y', 'layer': -1, 'base_dir': 1},
-    'F': {'axis': 'z', 'layer': 1, 'base_dir': 1},
-    'B': {'axis': 'z', 'layer': -1, 'base_dir': -1},
+    'F': {'axis': 'z', 'layer': 1, 'base_dir': -1},
+    'B': {'axis': 'z', 'layer': -1, 'base_dir': 1},
 }
 
 # Face colors (RGB)
