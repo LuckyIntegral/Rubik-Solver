@@ -123,16 +123,6 @@ make test
 ```
 
 
-## performance output sample
-
-Builds `test_performance` from `main_test_performance.cpp`. It generates one random scramble (**20–40** moves), solves it, and prints **`performance_solution()`**
-
-```bash
-make test_performance
-./test_performance
-```
-
-
 ## Visualizer
 
 ![Pygame visualizer: scramble, run `./rubik`, playback](media/visualizer_demo.gif)

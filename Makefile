@@ -16,7 +16,7 @@ VENV_PY		= $(VENV)/bin/python3
 VENV_PIP	= $(VENV)/bin/pip
 
 SRCS_DIR	= srcs
-SRCS		= $(filter-out $(SRCS_DIR)/main_test.cpp $(SRCS_DIR)/main_test_performance.cpp,$(wildcard $(SRCS_DIR)/*.cpp))
+SRCS		= $(filter-out $(SRCS_DIR)/main_test.cpp,$(wildcard $(SRCS_DIR)/*.cpp))
 
 OBJS_DIR	= objs
 OBJS		= $(addprefix $(OBJS_DIR)/, $(SRCS:${SRCS_DIR}/%.cpp=%.o))
@@ -39,7 +39,7 @@ clean	:
 		$(RM) $(OBJS_DIR)
 
 fclean	:
-		$(RM) $(OBJS_DIR) $(NAME) test test.d test_performance
+		$(RM) $(OBJS_DIR) $(NAME) test test.d
 
 re		:
 		$(RM) $(OBJS_DIR) $(NAME)
@@ -67,10 +67,6 @@ test		:
 		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test \
 			srcs/main_test.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/solver.cpp srcs/heuristics.cpp srcs/encode_tables.cpp
 
-test_performance	:
-		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test_performance \
-			srcs/main_test_performance.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/solver.cpp srcs/heuristics.cpp srcs/encode_tables.cpp
-
 -include $(DEPS)
 
-.PHONY: all clean fclean re run v clean-venv test test_performance
+.PHONY: all clean fclean re run v clean-venv test
