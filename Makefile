@@ -11,6 +11,10 @@ INCLUDES	= -I incs/
 
 NAME		= rubik
 
+VENV		= venv
+VENV_PY		= $(VENV)/bin/python3
+VENV_PIP	= $(VENV)/bin/pip
+
 SRCS_DIR	= srcs
 SRCS		= $(filter-out $(SRCS_DIR)/main_%_test.cpp $(SRCS_DIR)/test_performance.cpp,$(wildcard $(SRCS_DIR)/*.cpp))
 
@@ -45,8 +49,19 @@ run		:
 		$(MAKE) re
 		./$(NAME)
 
-v		:
-		python3 visualizer/main.py
+# Python visualizer: creates venv + installs deps when needed, then runs
+$(VENV)/bin/python3:
+		python3 -m venv $(VENV)
+
+$(VENV)/.deps_installed: requirements.txt $(VENV)/bin/python3
+		$(VENV_PIP) install -r requirements.txt
+		@touch $(VENV)/.deps_installed
+
+v		: $(VENV)/.deps_installed
+		$(VENV_PY) visualizer/main.py
+
+clean-venv	:
+		$(RM) $(VENV)
 
 test		:
 		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test \
@@ -58,4 +73,4 @@ test_performance	:
 
 -include $(DEPS)
 
-.PHONY: all clean fclean re run test test_performance
+.PHONY: all clean fclean re run v clean-venv test test_performance
