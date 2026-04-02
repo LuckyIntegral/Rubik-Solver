@@ -8,8 +8,8 @@ The repository includes:
 - A Python visualizer (`visualizer/`) that renders the cube in 3D, runs the solver, and animates moves.
 
 **Credits:** 
-[Mohamad Zolfaghari Pour](https://github.com/zolfagharipour) — solver algorithm and C++ core
-[Vitalii Frants](https://github.com/LuckyIntegral) — visualizer, tooling, input checking.
+- [Mohamad Zolfaghari Pour](https://github.com/zolfagharipour) — solver algorithm and C++ core.
+- [Vitalii Frants](https://github.com/LuckyIntegral) — visualizer, tooling, input checking.
 
 ---
 
