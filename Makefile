@@ -71,11 +71,6 @@ test_performance	:
 		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test_performance \
 			srcs/main_test_performance.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/solver.cpp srcs/heuristics.cpp srcs/encode_tables.cpp
 
-# Rebuild README assets from full capture (requires ffmpeg). GIF is what GitHub README displays inline.
-readme-media	:
-		ffmpeg -y -i media/rubik_solver.mp4 -vf "scale='min(960,iw)':-2" -c:v libx264 -crf 32 -preset medium -movflags +faststart media/rubik_solver_readme.mp4
-		ffmpeg -y -i media/rubik_solver_readme.mp4 -vf "fps=10,scale=640:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=96[p];[s1][p]paletteuse" -loop 0 media/visualizer_demo.gif
-
 -include $(DEPS)
 
-.PHONY: all clean fclean re run v clean-venv test test_performance readme-media
+.PHONY: all clean fclean re run v clean-venv test test_performance

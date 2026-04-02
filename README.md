@@ -7,20 +7,14 @@ The repository includes:
 - A C++ binary named `rubik` that parses a scramble and prints a solution sequence.
 - A Python visualizer (`visualizer/`) that renders the cube in 3D, runs the solver, and animates moves.
 
+**Credits:** [Mohamad Zolfaghari Pour](https://github.com/zolfagharipour) — solver algorithm and C++ core; [Vitalii Frants](https://github.com/LuckyIntegral) — visualizer, tooling, and the rest of the project.
+
 ---
 
 ## Warning for 42 Students
 
 This repository is intended as a reference and educational tool. **42 students are strongly advised not to copy this code without fully understanding its functionality.** Plagiarism in any form is against 42's principles and could lead to serious academic consequences. Use this repository responsibly to learn and better understand how to implement similar functionalities on your own.
 
-## Project Overview
-
-Main parts:
-
-- `srcs/`, `incs/`: C++ solver source and headers.
-- `visualizer/`: Python frontend (pygame UI and 3D scene rendering).
-- `requirements.txt`: Python dependencies.
-- `Makefile`: Build targets for the solver, tests, and the visualizer environment.
 
 ## Algorithm: Thistlethwaite
 
@@ -78,21 +72,6 @@ This creates the executable:
 ```bash
 ./rubik
 ```
-
-### Makefile targets
-
-| Target | Description |
-|--------|-------------|
-| `make` / `make all` | Build `./rubik`. |
-| `make clean` | Remove object files (`objs/`). |
-| `make fclean` | Remove `objs/`, `rubik`, and test binaries (`test`, `test_performance`). Does **not** remove the Python `venv/`. |
-| `make re` | `fclean` the main binary and objects, then rebuild `rubik`. |
-| `make run` | Rebuild `rubik` and run `./rubik` (no scramble; use `./rubik "moves"` for a real run). |
-| `make test` | Build and run the **randomized validation suite** (see below). |
-| `make test_performance` | Build and run the **performance demo** (see below). |
-| `make v` | Ensure `venv/` exists, install Python deps if needed, run `visualizer/main.py`. |
-| `make clean-venv` | Delete the `venv/` directory (next `make v` recreates it). |
-| `make readme-media` | Regenerate `media/rubik_solver_readme.mp4` and `media/visualizer_demo.gif` from `media/rubik_solver.mp4` (`ffmpeg`). |
 
 ## C++ Solver Usage
 
@@ -174,17 +153,6 @@ To remove the virtual environment completely:
 make clean-venv
 ```
 
-### Manual venv (optional)
-
-If you prefer not to use `make v`:
-
-```bash
-python3 -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-python3 visualizer/main.py
-```
-
 ## Visualizer Usage
 
 ![Pygame visualizer: scramble, run `./rubik`, playback](media/visualizer_demo.gif)
@@ -205,17 +173,3 @@ Controls:
 - `R`: reset cube
 - `V`: reset camera
 - `ESC`: quit
-
-## Troubleshooting
-
-`./rubik: No such file or directory`
-
-- Build first with `make`.
-
-`No module named pygame` (or similar)
-
-- Run `make v` so dependencies install into `venv`, or activate `venv` and run `pip install -r requirements.txt`.
-
-`Invalid move: ...`
-
-- Check notation and spacing in the move sequence.
