@@ -71,6 +71,10 @@ test_performance	:
 		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test_performance \
 			srcs/main_test_performance.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/solver.cpp srcs/heuristics.cpp srcs/encode_tables.cpp
 
+# Rebuild README-embedded clip from full capture (requires ffmpeg)
+readme-media	:
+		ffmpeg -y -i media/rubik_solver.mp4 -vf "scale='min(960,iw)':-2" -c:v libx264 -crf 32 -preset medium -movflags +faststart media/rubik_solver_readme.mp4
+
 -include $(DEPS)
 
-.PHONY: all clean fclean re run v clean-venv test test_performance
+.PHONY: all clean fclean re run v clean-venv test test_performance readme-media
