@@ -92,7 +92,7 @@ This creates the executable:
 | `make test_performance` | Build and run the **performance demo** (see below). |
 | `make v` | Ensure `venv/` exists, install Python deps if needed, run `visualizer/main.py`. |
 | `make clean-venv` | Delete the `venv/` directory (next `make v` recreates it). |
-| `make readme-media` | Rebuild `media/rubik_solver_readme.mp4` from `media/rubik_solver.mp4` for the README embed (requires `ffmpeg`). |
+| `make readme-media` | Regenerate `media/rubik_solver_readme.mp4` and `media/visualizer_demo.gif` from `media/rubik_solver.mp4` (`ffmpeg`). |
 
 ## C++ Solver Usage
 
@@ -187,9 +187,7 @@ python3 visualizer/main.py
 
 ## Visualizer Usage
 
-Screen recording of the pygame UI (scramble, run solver, playback). The file below is a **compressed** copy (`rubik_solver_readme.mp4`, ~0.5 MB) so it loads reliably in the GitHub README; the full-resolution capture is `media/rubik_solver.mp4` for local viewing.
-
-<video src="media/rubik_solver_readme.mp4" controls muted playsinline width="100%"></video>
+![Pygame visualizer: scramble, run `./rubik`, playback](media/visualizer_demo.gif)
 
 Main workflow:
 
