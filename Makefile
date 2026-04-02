@@ -16,7 +16,7 @@ VENV_PY		= $(VENV)/bin/python3
 VENV_PIP	= $(VENV)/bin/pip
 
 SRCS_DIR	= srcs
-SRCS		= $(filter-out $(SRCS_DIR)/main_%_test.cpp $(SRCS_DIR)/test_performance.cpp,$(wildcard $(SRCS_DIR)/*.cpp))
+SRCS		= $(filter-out $(SRCS_DIR)/main_test.cpp $(SRCS_DIR)/main_test_performance.cpp,$(wildcard $(SRCS_DIR)/*.cpp))
 
 OBJS_DIR	= objs
 OBJS		= $(addprefix $(OBJS_DIR)/, $(SRCS:${SRCS_DIR}/%.cpp=%.o))
@@ -65,11 +65,11 @@ clean-venv	:
 
 test		:
 		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test \
-			srcs/main_phase_test.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/solver.cpp srcs/heuristics.cpp srcs/encode_tables.cpp
+			srcs/main_test.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/solver.cpp srcs/heuristics.cpp srcs/encode_tables.cpp
 
 test_performance	:
 		$(CXX) $(CXXFLAGS) $(INCLUDES) -o test_performance \
-			srcs/test_performance.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/solver.cpp srcs/heuristics.cpp srcs/encode_tables.cpp
+			srcs/main_test_performance.cpp srcs/thistlethwaite.cpp srcs/move.cpp srcs/prune.cpp srcs/solver.cpp srcs/heuristics.cpp srcs/encode_tables.cpp
 
 -include $(DEPS)
 

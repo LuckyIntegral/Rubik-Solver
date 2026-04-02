@@ -117,7 +117,7 @@ struct FailureInfo {
 };
 
 int main() {
-    static const int NUM_TESTS = 500;
+    static const int NUM_TESTS = 5000;
     static const int SCRAMBLE_LEN_MIN = 15;
     static const int SCRAMBLE_LEN_MAX = 40;
     static const int MAX_ACCEPTABLE_MS = 3000;
