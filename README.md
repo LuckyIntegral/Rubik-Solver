@@ -7,7 +7,9 @@ The repository includes:
 - A C++ binary named `rubik` that parses a scramble and prints a solution sequence.
 - A Python visualizer (`visualizer/`) that renders the cube in 3D, runs the solver, and animates moves.
 
-**Credits:** [Mohamad Zolfaghari Pour](https://github.com/zolfagharipour) — solver algorithm and C++ core; [Vitalii Frants](https://github.com/LuckyIntegral) — visualizer, tooling, and the rest of the project.
+**Credits:** 
+[Mohamad Zolfaghari Pour](https://github.com/zolfagharipour) — solver algorithm and C++ core
+[Vitalii Frants](https://github.com/LuckyIntegral) — visualizer, tooling, input checking.
 
 ---
 
@@ -100,11 +102,12 @@ Notes:
 - With flags, the scramble string is the **last** argument.
 - Moves must be space-separated and use standard notation (`R`, `U'`, `F2`, …).
 
-## C++ tests
 
-### `make test` — randomized validation suite
+## Tester (randomized validation)
 
-Builds `test` from `main_test.cpp` and runs it. In testing terminology, **stress testing** usually means overloading the system (throughput, memory, concurrency). This binary is better described as **randomized validation** (or **Monte Carlo validation**): many random scrambles with correctness and performance bounds.
+![Randomized validation: ./test output](media/test_result.png)
+
+Builds `test` from `main_test.cpp` and runs it.
 
 The program:
 
@@ -113,29 +116,26 @@ The program:
 3. For each solve, checks solution length (≤ **52** moves) and time (≤ **3000** ms).
 4. Prints a progress bar and a summary (best/worst/avg time and move count).
 
-![Randomized validation: ./test output](media/test_result.png)
 
 ```bash
 make test
 ./test
 ```
 
-`make fclean` removes the `test` binary.
 
-### `make test_performance` — performance output sample
+## performance output sample
 
-Builds `test_performance` from `main_test_performance.cpp`. It generates one random scramble (**20–40** moves), solves it, and prints **`performance_solution()`** (telemetry-style string from the solver).
+Builds `test_performance` from `main_test_performance.cpp`. It generates one random scramble (**20–40** moves), solves it, and prints **`performance_solution()`**
 
 ```bash
 make test_performance
 ./test_performance
 ```
 
-`make fclean` removes the `test_performance` binary.
 
-## Python visualizer (`make v`)
+## Visualizer
 
-You do **not** need to create or activate a venv by hand. From the project root:
+![Pygame visualizer: scramble, run `./rubik`, playback](media/visualizer_demo.gif)
 
 ```bash
 make v
@@ -154,8 +154,6 @@ make clean-venv
 ```
 
 ## Visualizer Usage
-
-![Pygame visualizer: scramble, run `./rubik`, playback](media/visualizer_demo.gif)
 
 Main workflow:
 
