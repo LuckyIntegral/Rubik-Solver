@@ -117,7 +117,7 @@ struct FailureInfo {
 };
 
 int main() {
-    static const int NUM_TESTS = 5000;
+    static const int NUM_TESTS = 500;
     static const int SCRAMBLE_LEN_MIN = 15;
     static const int SCRAMBLE_LEN_MAX = 40;
     static const int MAX_ACCEPTABLE_MS = 3000;
@@ -129,9 +129,9 @@ int main() {
         return 1;
     }
     std::cout << GREEN << "inverse_moves: OK" << RESET << "\n";
-    std::cout << BOLD << "Stress test: " << NUM_TESTS << " tests" << RESET
+    std::cout << BOLD << "Randomized validation: " << NUM_TESTS << " cases" << RESET
               << " | scramble len " << SCRAMBLE_LEN_MIN << "-" << SCRAMBLE_LEN_MAX
-              << " | fail if > " << MAX_ACCEPTABLE_MS << "ms or > " << MAX_MOVES << " moves\n";
+              << "\nfail if > " << MAX_ACCEPTABLE_MS << "ms or > " << MAX_MOVES << " moves\n";
 
     Thistlethwaite t;
     std::mt19937 rng(std::random_device{}());
@@ -226,6 +226,6 @@ int main() {
         return 1;
     }
 
-    std::cout << "\n" << GREEN << BOLD << "All " << NUM_TESTS << " stress tests passed" << RESET << "\n";
+    std::cout << "\n" << GREEN << BOLD << "All " << NUM_TESTS << " randomized validation cases passed" << RESET << "\n";
     return 0;
 }

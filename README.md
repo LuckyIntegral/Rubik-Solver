@@ -88,7 +88,7 @@ This creates the executable:
 | `make fclean` | Remove `objs/`, `rubik`, and test binaries (`test`, `test_performance`). Does **not** remove the Python `venv/`. |
 | `make re` | `fclean` the main binary and objects, then rebuild `rubik`. |
 | `make run` | Rebuild `rubik` and run `./rubik` (no scramble; use `./rubik "moves"` for a real run). |
-| `make test` | Build and run the **phase stress test** (see below). |
+| `make test` | Build and run the **randomized validation suite** (see below). |
 | `make test_performance` | Build and run the **performance demo** (see below). |
 | `make v` | Ensure `venv/` exists, install Python deps if needed, run `visualizer/main.py`. |
 | `make clean-venv` | Delete the `venv/` directory (next `make v` recreates it). |
@@ -122,14 +122,18 @@ Notes:
 
 ## C++ tests
 
-### `make test` — phase stress test
+### `make test` — randomized validation suite
 
-Builds `test` from `main_test.cpp` and runs it. The program:
+Builds `test` from `main_test.cpp` and runs it. In testing terminology, **stress testing** usually means overloading the system (throughput, memory, concurrency). This binary is better described as **randomized validation** (or **Monte Carlo validation**): many random scrambles with correctness and performance bounds.
+
+The program:
 
 1. Checks `inverse_move` (apply + inverse restores the cube) on random states.
 2. Runs **500** random scrambles (length **15–40** moves).
 3. For each solve, checks solution length (≤ **52** moves) and time (≤ **3000** ms).
 4. Prints a progress bar and a summary (best/worst/avg time and move count).
+
+![Randomized validation: ./test output](media/test_result.png)
 
 ```bash
 make test
@@ -181,6 +185,12 @@ python3 visualizer/main.py
 ```
 
 ## Visualizer Usage
+
+Screen recording of the pygame UI (scramble, run solver, playback):
+
+<video src="media/rubik_solver.mp4" controls width="720"></video>
+
+If the preview above does not play in your viewer, open [`media/rubik_solver.mp4`](media/rubik_solver.mp4) in the repository or download the file locally.
 
 Main workflow:
 
